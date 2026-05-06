@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PertandinganController::class, 'index'])->name('home');
 Route::get('/history', [PertandinganController::class, 'history'])->name('history');
 Route::get('/pertandingan/{pertandingan}', [PertandinganController::class, 'show'])->name('pertandingan.show');
+Route::get('/tournament/{tournament}/bracket', [CustomBracketController::class, 'publicBracket'])->name('tournament.public.bracket');
 
 // Jalur Autentikasi
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -27,6 +28,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/pertandingan/bulk-live', [PertandinganController::class, 'bulkLive'])->name('pertandingan.bulk-live');
     Route::patch('/pertandingan/{pertandingan}/update-score', [PertandinganController::class, 'updateScore']);
     Route::patch('/pertandingan/{pertandingan}', [PertandinganController::class, 'update'])->name('pertandingan.update');
+    
+    // Clear all matches (tanpa hapus data master)
+    Route::post('/admin/clear-matches', [PertandinganController::class, 'clearAllMatches'])->name('admin.clear-matches');
     
     // Custom Bracket Builder Routes
     Route::get('/admin/bracket-builder', [CustomBracketController::class, 'builder'])->name('admin.tournament.bracket.builder');

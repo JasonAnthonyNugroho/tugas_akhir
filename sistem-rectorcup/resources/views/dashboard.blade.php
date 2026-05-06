@@ -3,11 +3,17 @@
 @section('title', 'Dashboard Live')
 
 @section('content')
+    @php
+        $liveMatches = $pertandingans->where('status', 'live');
+        $scheduledMatches = $pertandingans->where('status', 'scheduled');
+    @endphp
+
+    {{-- Connection Status --}}
     <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h2 class="font-weight-bold mb-1">Pertandingan Berlangsung</h2>
-                <p class="text-muted">Pantau hasil pertandingan secara real-time.</p>
+                <h2 class="font-weight-bold mb-1">Dashboard Rector Cup</h2>
+                <p class="text-muted">Pantau pertandingan live, bracket tournament, dan jadwal mendatang.</p>
             </div>
             <div id="connectionStatus" class="small">
                 <span class="badge badge-secondary" style="border-radius: 100px;">
@@ -17,7 +23,215 @@
         </div>
     </div>
 
-    @if($pertandingans->isEmpty())
+    {{-- SECTION 1: LIVE MATCHES (Paling Atas) --}}
+    @if($liveMatches->isNotEmpty())
+        <div class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <div class="badge-live mr-3" style="padding: 8px 16px; font-size: 0.875rem;">
+                    <span class="live-dot"></span> LIVE NOW
+                </div>
+                <div class="flex-grow-1 border-bottom border-danger" style="opacity: 0.3;"></div>
+            </div>
+            
+            <div class="row" id="liveMatchContainer">
+                @foreach($liveMatches as $p)
+                    <div class="col-md-6 col-xl-4 mb-4 match-card" data-id="{{ $p->id }}">
+                        <div class="card h-100 shadow-sm border-0" style="border-radius: 24px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border) !important; transition: all 0.3s ease;">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-4">
+                                    <span class="badge badge-primary px-3 py-1" style="border-radius: 100px;">
+                                        <i class="bi {{ $p->sport->icon ?? 'bi-trophy' }} mr-2"></i>
+                                        {{ $p->sport->nama_sport ?? 'Tournament' }}
+                                    </span>
+                                    <div class="badge-live-container">
+                                        <div class="badge-live">
+                                            <span class="live-dot"></span> LIVE
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row text-center align-items-center py-3">
+                                    <div class="col-5">
+                                        <h4 class="h6 font-weight-bold text-truncate mb-3 text-white">{{ $p->teamA?->name ?? 'TBD' }}</h4>
+                                        <div class="display-4 font-weight-bold text-white score-a">{{ $p->score_a }}</div>
+                                    </div>
+                                    <div class="col-2 p-0">
+                                        <div class="text-muted font-weight-bold small">VS</div>
+                                    </div>
+                                    <div class="col-5">
+                                        <h4 class="h6 font-weight-bold text-truncate mb-3 text-white">{{ $p->teamB?->name ?? 'TBD' }}</h4>
+                                        <div class="display-4 font-weight-bold text-white score-b">{{ $p->score_b }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 pt-4 border-top border-secondary d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.05) !important;">
+                                    <div class="small text-muted">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="bi bi-geo-alt mr-2 text-primary"></i> {{ $p->lokasi }}
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-calendar3 mr-2 text-primary"></i>
+                                            {{ \Carbon\Carbon::parse($p->waktu_tanding)->format('d M, H:i') }}
+                                        </div>
+                                    </div>
+                                    <a href="{{ route('pertandingan.show', $p->id) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+                                        Detail <i class="bi bi-arrow-right ml-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- SECTION 2: TOURNAMENT BRACKETS (Di Tengah) --}}
+    @if($tournaments->isNotEmpty())
+        <div class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <h4 class="text-white font-weight-bold mb-0 mr-3">
+                    <i class="bi bi-trophy text-warning mr-2"></i>Tournament Brackets
+                </h4>
+                <div class="flex-grow-1 border-bottom border-warning" style="opacity: 0.3;"></div>
+            </div>
+            
+            <div class="row">
+                @foreach($tournaments as $tournament)
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card border-0 h-100" style="background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(245, 158, 11, 0.2) !important;">
+                            <div class="card-body p-4">
+                                {{-- Header --}}
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-gradient rounded-circle p-2 d-flex align-items-center justify-content-center mr-3"
+                                         style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706) !important;">
+                                        <i class="bi {{ $tournament->sport->icon ?? 'bi-trophy' }} text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="font-weight-bold text-white mb-0">{{ $tournament->name }}</h6>
+                                        <small class="text-muted">{{ $tournament->sport->nama_sport }} • {{ $tournament->year }}</small>
+                                    </div>
+                                </div>
+                                
+                                {{-- Stats --}}
+                                <div class="row mb-3">
+                                    <div class="col-4 text-center">
+                                        <div class="text-warning font-weight-bold">{{ $tournament->teams->count() }}</div>
+                                        <small class="text-muted" style="font-size: 0.7rem;">Tim</small>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="text-success font-weight-bold">{{ $tournament->pertandingans->where('status', 'finished')->count() }}</div>
+                                        <small class="text-muted" style="font-size: 0.7rem;">Selesai</small>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="text-info font-weight-bold">{{ $tournament->pertandingans->where('status', 'live')->count() }}</div>
+                                        <small class="text-muted" style="font-size: 0.7rem;">Live</small>
+                                    </div>
+                                </div>
+                                
+                                {{-- Recent Matches --}}
+                                @php
+                                    $recentMatches = $tournament->pertandingans->whereIn('status', ['live', 'finished'])->take(2);
+                                @endphp
+                                @if($recentMatches->isNotEmpty())
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-2">Pertandingan Terbaru:</small>
+                                        @foreach($recentMatches as $match)
+                                            <div class="d-flex justify-content-between align-items-center py-1 px-2 rounded mb-1" 
+                                                 style="background: rgba(255,255,255,0.03);">
+                                                <div class="d-flex align-items-center">
+                                                    @if($match->status === 'live')
+                                                        <span class="badge badge-danger mr-2" style="font-size: 0.6rem; padding: 2px 6px;">LIVE</span>
+                                                    @elseif($match->winner_id)
+                                                        <span class="badge badge-success mr-2" style="font-size: 0.6rem; padding: 2px 6px;">DONE</span>
+                                                    @endif
+                                                    <small class="text-white">{{ $match->teamA?->name ?? 'TBD' }} vs {{ $match->teamB?->name ?? 'TBD' }}</small>
+                                                </div>
+                                                @if($match->status !== 'scheduled')
+                                                    <small class="text-warning font-weight-bold">{{ $match->score_a }} - {{ $match->score_b }}</small>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                
+                                {{-- Action --}}
+                                <a href="{{ route('tournament.public.bracket', $tournament) }}" class="btn btn-outline-warning btn-sm w-100">
+                                    <i class="bi bi-eye mr-2"></i>Lihat Bracket
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- SECTION 3: SCHEDULED MATCHES (Paling Bawah) --}}
+    @if($scheduledMatches->isNotEmpty())
+        <div class="mb-4">
+            <div class="d-flex align-items-center mb-4">
+                <h4 class="text-white font-weight-bold mb-0 mr-3">
+                    <i class="bi bi-calendar-event text-info mr-2"></i>Jadwal Mendatang
+                </h4>
+                <div class="flex-grow-1 border-bottom border-info" style="opacity: 0.3;"></div>
+            </div>
+            
+            <div class="row" id="scheduledMatchContainer">
+                @foreach($scheduledMatches as $p)
+                    <div class="col-md-6 col-xl-4 mb-4 match-card" data-id="{{ $p->id }}">
+                        <div class="card h-100 shadow-sm border-0" style="border-radius: 24px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border) !important; transition: all 0.3s ease; opacity: 0.9;">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-4">
+                                    <span class="badge badge-secondary px-3 py-1" style="border-radius: 100px;">
+                                        <i class="bi {{ $p->sport->icon ?? 'bi-trophy' }} mr-2"></i>
+                                        {{ $p->sport->nama_sport ?? 'Tournament' }}
+                                    </span>
+                                    <div class="badge-live-container">
+                                        <span class="badge badge-dark px-3 py-1 text-uppercase" style="border-radius: 100px; background: rgba(255,255,255,0.05);">
+                                            Terjadwal
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="row text-center align-items-center py-3">
+                                    <div class="col-5">
+                                        <h4 class="h6 font-weight-bold text-truncate mb-3 text-white">{{ $p->teamA?->name ?? 'TBD' }}</h4>
+                                        <div class="h3 font-weight-bold text-muted">-</div>
+                                    </div>
+                                    <div class="col-2 p-0">
+                                        <div class="text-muted font-weight-bold small">VS</div>
+                                    </div>
+                                    <div class="col-5">
+                                        <h4 class="h6 font-weight-bold text-truncate mb-3 text-white">{{ $p->teamB?->name ?? 'TBD' }}</h4>
+                                        <div class="h3 font-weight-bold text-muted">-</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 pt-4 border-top border-secondary d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.05) !important;">
+                                    <div class="small text-muted">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="bi bi-geo-alt mr-2 text-primary"></i> {{ $p->lokasi }}
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-calendar3 mr-2 text-primary"></i>
+                                            {{ \Carbon\Carbon::parse($p->waktu_tanding)->format('d M, H:i') }}
+                                        </div>
+                                    </div>
+                                    <span class="badge badge-info px-3 py-2" style="border-radius: 100px; font-size: 0.75rem;">
+                                        {{ \Carbon\Carbon::parse($p->waktu_tanding)->diffForHumans() }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- Empty State --}}
+    @if($liveMatches->isEmpty() && $scheduledMatches->isEmpty() && $tournaments->isEmpty())
         <div class="card border-0 py-5 text-center" style="background: rgba(255,255,255,0.02); border-radius: 24px;">
             <div class="card-body">
                 <div class="bg-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
@@ -25,65 +239,8 @@
                     <i class="bi bi-calendar-x text-muted h2 mb-0"></i>
                 </div>
                 <h5 class="font-weight-bold text-white">Tidak Ada Pertandingan</h5>
-                <p class="text-muted mx-auto mb-0" style="max-width: 400px;">Saat ini tidak ada pertandingan yang sedang berlangsung atau terjadwal untuk filter ini.</p>
+                <p class="text-muted mx-auto mb-0" style="max-width: 400px;">Saat ini tidak ada pertandingan yang sedang berlangsung atau terjadwal.</p>
             </div>
-        </div>
-    @else
-        <div class="row" id="matchContainer">
-            @foreach($pertandingans as $p)
-                <div class="col-md-6 col-xl-4 mb-4 match-card" data-id="{{ $p->id }}">
-                    <div class="card h-100 shadow-sm border-0" style="border-radius: 24px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border) !important; transition: all 0.3s ease;">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-4">
-                                <span class="badge badge-primary px-3 py-1" style="border-radius: 100px;">
-                                    <i class="bi {{ $p->sport->icon ?? 'bi-trophy' }} mr-2"></i>
-                                    {{ $p->sport->nama_sport ?? 'Tournament' }}
-                                </span>
-                                <div class="badge-live-container">
-                                    @if($p->status == 'live')
-                                        <div class="badge-live">
-                                            <span class="live-dot"></span> LIVE
-                                        </div>
-                                    @else
-                                        <span class="badge badge-dark px-3 py-1 text-uppercase" style="border-radius: 100px; background: rgba(255,255,255,0.05);">
-                                            Terjadwal
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="row text-center align-items-center py-3">
-                                <div class="col-5">
-                                    <h4 class="h6 font-weight-bold text-truncate mb-3 text-white">{{ $p->teamA?->name ?? 'TBD' }}</h4>
-                                    <div class="display-4 font-weight-bold text-white score-a">{{ $p->score_a }}</div>
-                                </div>
-                                <div class="col-2 p-0">
-                                    <div class="text-muted font-weight-bold small">VS</div>
-                                </div>
-                                <div class="col-5">
-                                    <h4 class="h6 font-weight-bold text-truncate mb-3 text-white">{{ $p->teamB?->name ?? 'TBD' }}</h4>
-                                    <div class="display-4 font-weight-bold text-white score-b">{{ $p->score_b }}</div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 pt-4 border-top border-secondary d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.05) !important;">
-                                <div class="small text-muted">
-                                    <div class="d-flex align-items-center mb-1">
-                                        <i class="bi bi-geo-alt mr-2 text-primary"></i> {{ $p->lokasi }}
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-calendar3 mr-2 text-primary"></i>
-                                        {{ \Carbon\Carbon::parse($p->waktu_tanding)->format('d M, H:i') }}
-                                    </div>
-                                </div>
-                                <a href="{{ route('pertandingan.show', $p->id) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                                    Detail <i class="bi bi-arrow-right ml-1"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
         </div>
     @endif
 @endsection

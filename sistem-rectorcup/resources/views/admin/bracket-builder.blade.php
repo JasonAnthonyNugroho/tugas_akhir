@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('title', 'Custom Bracket Builder')
 
@@ -7,20 +7,21 @@
     {{-- Header --}}
     <div class="mb-4">
         <h2 class="font-weight-bold text-white mb-2">
-            <i class="bi bi-diagram-3 mr-2"></i>Custom Bracket Builder
+            <i class="bi bi-magic mr-2"></i>Custom Bracket Builder
         </h2>
-        <p class="text-muted">Buat bracket tournament dengan drag & drop tim sesuai keinginan.</p>
+        <p class="text-muted">Flow: Konfigurasi → Pilih Tim → Generate Bracket → Drag & Drop Customisasi</p>
     </div>
 
-    {{-- Step 1: Configuration --}}
-    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.03); border-radius: 20px;" id="configSection">
+    {{-- Step 1: Configuration & Team Selection --}}
+    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.03); border-radius: 20px;" id="step1Section">
         <div class="card-header bg-transparent border-0 pt-4 px-4">
             <h5 class="text-white font-weight-bold mb-0">
-                <span class="badge badge-primary mr-2">1</span>Konfigurasi Bracket
+                <span class="badge badge-primary mr-2">1</span>Konfigurasi & Pilih Tim
             </h5>
         </div>
         <div class="card-body p-4">
             <form id="bracketConfigForm">
+                @csrf
                 <div class="row">
                     {{-- Tournament Name --}}
                     <div class="col-md-6 mb-3">
@@ -43,12 +44,13 @@
                     {{-- Bracket Size --}}
                     <div class="col-md-6 mb-3">
                         <label class="text-white font-weight-bold">Ukuran Bracket</label>
-                        <select name="bracket_size" class="form-control bg-dark text-white border-secondary" required>
+                        <select name="bracket_size" id="bracketSize" class="form-control bg-dark text-white border-secondary" required>
                             <option value="4">4 Teams (Semi Final + Final)</option>
                             <option value="8" selected>8 Teams (Quarter Final + Semi + Final)</option>
                             <option value="16">16 Teams (Round of 16 + Quarter + Semi + Final)</option>
                             <option value="32">32 Teams</option>
                         </select>
+                        <small class="text-muted">Tim yang dipilih harus sama dengan ukuran bracket</small>
                     </div>
 
                     {{-- Keterangan --}}
@@ -61,37 +63,56 @@
 
                 {{-- Team Selection --}}
                 <div class="mt-4">
-                    <label class="text-white font-weight-bold mb-3 d-block">
-                        Pilih Tim (Drag untuk urutkan) 
-                        <span class="text-muted font-weight-normal">- Pilih minimal 2 tim</span>
-                    </label>
-                    
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div id="teamPool" class="d-flex flex-wrap gap-2 p-3 bg-dark rounded" style="min-height: 100px;">
-                                <p class="text-muted mb-0 w-100 text-center py-3">
-                                    <i class="bi bi-arrow-up mr-2"></i>Tim akan muncul di sini setelah memilih sport
-                                </p>
-                            </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label class="text-white font-weight-bold mb-0">
+                            Pilih Tim Peserta
+                            <span class="text-muted font-weight-normal">- Pilih sesuai ukuran bracket</span>
+                        </label>
+                        <div id="selectionInfo" class="badge badge-secondary">
+                            0 / 8 tim dipilih
                         </div>
-                        <div class="col-md-4">
-                            <div class="card bg-dark border-secondary">
-                                <div class="card-body">
-                                    <h6 class="text-white mb-2">Tim Terpilih</h6>
-                                    <div id="selectedCount" class="text-primary font-weight-bold h4 mb-0">0</div>
-                                    <small class="text-muted">tim dipilih</small>
+                    </div>
+                    
+                    {{-- All Teams Grid --}}
+                    <div id="teamGrid" class="row">
+                        @foreach($teams as $prodi => $prodiTeams)
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-header bg-transparent border-secondary py-2">
+                                        <span class="text-white font-weight-bold">{{ $prodi }}</span>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach($prodiTeams as $team)
+                                                <div class="team-select-card" 
+                                                     data-team-id="{{ $team->id }}"
+                                                     data-team-name="{{ $team->name }}"
+                                                     onclick="toggleTeam(this)">
+                                                    <span class="badge badge-dark px-2 py-1" style="cursor: pointer; font-size: 0.8rem;">
+                                                        {{ $team->name }}
+                                                    </span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endforeach
+                    </div>
+                    
+                    {{-- Selected Teams Preview --}}
+                    <div class="mt-3 p-3 bg-dark rounded" id="selectedTeamsPreview" style="display: none;">
+                        <h6 class="text-white mb-2">Tim Terpilih:</h6>
+                        <div id="selectedTeamsList" class="d-flex flex-wrap gap-2"></div>
                     </div>
                 </div>
 
                 {{-- Action Buttons --}}
                 <div class="mt-4 d-flex justify-content-between">
-                    <button type="button" class="btn btn-outline-light" onclick="window.history.back()">
+                    <a href="{{ route('admin.index') }}" class="btn btn-outline-light">
                         <i class="bi bi-arrow-left mr-2"></i>Kembali
-                    </button>
-                    <button type="submit" class="btn btn-primary px-4">
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4" id="generateBtn" disabled>
                         <i class="bi bi-diagram-3 mr-2"></i>Generate Bracket Preview
                     </button>
                 </div>
@@ -309,117 +330,150 @@
 let selectedTeams = [];
 let currentArrangement = [];
 
-{{-- Sport Change - Load Teams --}}
-document.querySelector('select[name="sport_id"]').addEventListener('change', function() {
-    const sportId = this.value;
-    const teamPool = document.getElementById('teamPool');
+{{-- STEP 1: Team Selection --}}
+function toggleTeam(element) {
+    const teamId = element.dataset.teamId;
+    const teamName = element.dataset.teamName;
+    const badge = element.querySelector('.badge');
+    const bracketSize = parseInt(document.getElementById('bracketSize').value);
     
-    if (!sportId) {
-        teamPool.innerHTML = '<p class="text-muted mb-0 w-100 text-center py-3"><i class="bi bi-arrow-up mr-2"></i>Pilih sport untuk melihat tim</p>';
-        return;
+    if (element.classList.contains('selected')) {
+        {{-- Deselect --}}
+        element.classList.remove('selected');
+        badge.classList.remove('badge-primary');
+        badge.classList.add('badge-dark');
+        selectedTeams = selectedTeams.filter(t => t.id != teamId);
+    } else {
+        {{-- Select --}}
+        if (selectedTeams.length >= bracketSize) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Maksimum Tim',
+                text: `Anda hanya bisa memilih ${bracketSize} tim untuk bracket ini!`,
+                confirmButtonColor: '#6366f1'
+            });
+            return;
+        }
+        element.classList.add('selected');
+        badge.classList.remove('badge-dark');
+        badge.classList.add('badge-primary');
+        selectedTeams.push({ id: teamId, name: teamName });
     }
     
-    {{-- Load all teams (sport-agnostic for now) --}}
-    const teams = @json($teams);
-    let html = '';
-    
-    Object.keys(teams).forEach(prodi => {
-        teams[prodi].forEach(team => {
-            html += `
-                <div class="team-card card bg-dark border-secondary m-1" 
-                     draggable="true" 
-                     data-team-id="${team.id}"
-                     data-team-name="${team.name}"
-                     data-prodi="${prodi}"
-                     style="width: auto; cursor: pointer; display: inline-block;">
-                    <div class="card-body p-2">
-                        <div class="d-flex align-items-center">
-                            <span class="badge badge-secondary mr-2" style="font-size: 0.7rem;">${prodi}</span>
-                            <span class="text-white font-weight-bold" style="font-size: 0.875rem;">${team.name}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    });
-    
-    teamPool.innerHTML = html;
-    
-    {{-- Add click to select --}}
-    document.querySelectorAll('.team-card').forEach(card => {
-        card.addEventListener('click', function() {
-            this.classList.toggle('selected');
-            updateSelectedCount();
-        });
-        
-        {{-- Drag start --}}
-        card.addEventListener('dragstart', function(e) {
-            e.dataTransfer.setData('teamId', this.dataset.teamId);
-            e.dataTransfer.setData('teamName', this.dataset.teamName);
-            this.classList.add('dragging');
-        });
-        
-        card.addEventListener('dragend', function() {
-            this.classList.remove('dragging');
-        });
-    });
-});
-
-function updateSelectedCount() {
-    const selected = document.querySelectorAll('.team-card.selected');
-    selectedTeams = Array.from(selected).map(card => ({
-        id: card.dataset.teamId,
-        name: card.dataset.teamName,
-        prodi: card.dataset.prodi
-    }));
-    document.getElementById('selectedCount').textContent = selectedTeams.length;
+    updateSelectionUI();
 }
 
-{{-- Form Submit - Generate Preview --}}
+function updateSelectionUI() {
+    const bracketSize = parseInt(document.getElementById('bracketSize').value);
+    const count = selectedTeams.length;
+    
+    {{-- Update counter badge --}}
+    const infoBadge = document.getElementById('selectionInfo');
+    infoBadge.textContent = `${count} / ${bracketSize} tim dipilih`;
+    
+    if (count === bracketSize) {
+        infoBadge.classList.remove('badge-secondary');
+        infoBadge.classList.add('badge-success');
+    } else {
+        infoBadge.classList.remove('badge-success');
+        infoBadge.classList.add('badge-secondary');
+    }
+    
+    {{-- Update selected teams preview --}}
+    const previewDiv = document.getElementById('selectedTeamsPreview');
+    const listDiv = document.getElementById('selectedTeamsList');
+    
+    if (count > 0) {
+        previewDiv.style.display = 'block';
+        listDiv.innerHTML = selectedTeams.map(t => `
+            <span class="badge badge-primary px-3 py-2">${t.name}</span>
+        `).join('');
+    } else {
+        previewDiv.style.display = 'none';
+    }
+    
+    {{-- Enable/disable generate button --}}
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.disabled = count !== bracketSize;
+    if (count === bracketSize) {
+        generateBtn.classList.remove('btn-primary');
+        generateBtn.classList.add('btn-success');
+        generateBtn.innerHTML = '<i class="bi bi-check-lg mr-2"></i>Generate Bracket Preview';
+    } else {
+        generateBtn.classList.remove('btn-success');
+        generateBtn.classList.add('btn-primary');
+        generateBtn.innerHTML = '<i class="bi bi-diagram-3 mr-2"></i>Generate Bracket Preview';
+    }
+}
+
+{{-- Update counter when bracket size changes --}}
+document.getElementById('bracketSize').addEventListener('change', function() {
+    const newSize = parseInt(this.value);
+    const currentCount = selectedTeams.length;
+    
+    if (currentCount > newSize) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Tim Berlebih',
+            text: `Anda sudah memilih ${currentCount} tim. Silakan kurangi menjadi ${newSize} tim.`,
+            confirmButtonColor: '#6366f1'
+        });
+    }
+    updateSelectionUI();
+});
+
+{{-- STEP 2: Generate Bracket with Auto-Fill --}}
 document.getElementById('bracketConfigForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    if (selectedTeams.length < 2) {
+    const bracketSize = parseInt(document.getElementById('bracketSize').value);
+    
+    if (selectedTeams.length !== bracketSize) {
         Swal.fire({
             icon: 'warning',
-            title: 'Tim Kurang',
-            text: 'Pilih minimal 2 tim untuk membuat bracket!',
+            title: 'Tim Belum Lengkap',
+            text: `Pilih tepat ${bracketSize} tim untuk melanjutkan!`,
             confirmButtonColor: '#6366f1'
         });
         return;
     }
     
-    const formData = new FormData(this);
-    formData.append('team_ids', selectedTeams.map(t => t.id).join(','));
-    
     {{-- Show preview section --}}
     document.getElementById('previewSection').classList.remove('d-none');
     
-    {{-- Generate bracket --}}
-    generateBracketPreview();
+    {{-- Generate bracket with teams auto-filled --}}
+    generateBracketWithTeams();
     
     {{-- Scroll to preview --}}
     document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
 });
 
-function generateBracketPreview() {
-    const bracketSize = parseInt(document.querySelector('select[name="bracket_size"]').value);
+function generateBracketWithTeams() {
+    const bracketSize = parseInt(document.getElementById('bracketSize').value);
     const numRounds = Math.log2(bracketSize);
     const container = document.getElementById('bracketContainer');
     const availableTeamsDiv = document.getElementById('availableTeams');
     
-    {{-- Populate available teams for drag source --}}
-    availableTeamsDiv.innerHTML = selectedTeams.map(team => `
-        <div class="team-card card bg-dark border-secondary mb-2" 
-             draggable="true" 
-             data-team-id="${team.id}"
-             data-team-name="${team.name}">
-            <div class="card-body p-2">
-                <div class="text-white font-weight-bold" style="font-size: 0.875rem;">${team.name}</div>
-                <small class="text-muted">${team.prodi}</small>
+    {{-- Initialize arrangement with selected teams --}}
+    currentArrangement = [];
+    for (let i = 0; i < bracketSize / 2; i++) {
+        currentArrangement[i] = [null, null];
+    }
+    
+    {{-- Populate available teams pool for drag source --}}
+    availableTeamsDiv.innerHTML = `
+        <div class="mb-2 small text-muted">Drag tim ke bracket:</div>
+        ${selectedTeams.map(team => `
+            <div class="team-card card bg-dark border-secondary mb-2" 
+                 draggable="true" 
+                 data-team-id="${team.id}"
+                 data-team-name="${team.name}">
+                <div class="card-body p-2">
+                    <div class="text-white font-weight-bold" style="font-size: 0.875rem;">${team.name}</div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('')}
+    `;
     
     {{-- Initialize drag for available teams --}}
     document.querySelectorAll('#availableTeams .team-card').forEach(card => {
@@ -436,7 +490,6 @@ function generateBracketPreview() {
     
     {{-- Generate bracket HTML --}}
     let html = '<div class="d-flex">';
-    currentArrangement = [];
     
     for (let round = 1; round <= numRounds; round++) {
         const numMatches = bracketSize / Math.pow(2, round);
@@ -448,15 +501,24 @@ function generateBracketPreview() {
         `;
         
         for (let match = 0; match < numMatches; match++) {
-            const matchIndex = (round === 1) ? match : null;
+            const teamIndex = match * 2;
+            const teamA = selectedTeams[teamIndex];
+            const teamB = selectedTeams[teamIndex + 1];
             
-            if (round === 1) {
-                currentArrangement[match] = [null, null];
+            {{-- Fill Round 1 with selected teams --}}
+            if (round === 1 && teamA) {
+                currentArrangement[match][0] = teamA.id;
             }
+            if (round === 1 && teamB) {
+                currentArrangement[match][1] = teamB.id;
+            }
+            
+            const slotAHasTeam = round === 1 && teamA;
+            const slotBHasTeam = round === 1 && teamB;
             
             html += `
                 <div class="bracket-match">
-                    <div class="match-slot" 
+                    <div class="match-slot ${slotAHasTeam ? 'occupied' : ''}" 
                          data-round="${round}" 
                          data-match="${match}"
                          data-slot="a"
@@ -464,9 +526,12 @@ function generateBracketPreview() {
                          ondrop="drop(event)" 
                          ondragover="allowDrop(event)"
                          ondragleave="leaveDrop(event)">
-                        <span class="placeholder-text">Drop tim di sini</span>
+                        ${slotAHasTeam ? `
+                            <span class="team-name">${teamA.name}</span>
+                            <i class="bi bi-x-circle remove-btn" onclick="removeTeam(this, '${match}', 'a')"></i>
+                        ` : '<span class="placeholder-text">Drop tim di sini</span>'}
                     </div>
-                    <div class="match-slot" 
+                    <div class="match-slot ${slotBHasTeam ? 'occupied' : ''}" 
                          data-round="${round}" 
                          data-match="${match}"
                          data-slot="b"
@@ -474,7 +539,10 @@ function generateBracketPreview() {
                          ondrop="drop(event)" 
                          ondragover="allowDrop(event)"
                          ondragleave="leaveDrop(event)">
-                        <span class="placeholder-text">Drop tim di sini</span>
+                        ${slotBHasTeam ? `
+                            <span class="team-name">${teamB.name}</span>
+                            <i class="bi bi-x-circle remove-btn" onclick="removeTeam(this, '${match}', 'b')"></i>
+                        ` : '<span class="placeholder-text">Drop tim di sini</span>'}
                     </div>
                 </div>
             `;

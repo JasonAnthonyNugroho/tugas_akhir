@@ -35,8 +35,20 @@ class PertandinganController extends Controller
             })->values();
 
         $sports = Sport::all();
+        
+        // Get active tournaments with their data
+        $tournaments = \App\Models\Tournament::with(['sport', 'teams', 'pertandingans' => function($q) {
+                $q->whereIn('status', ['live', 'finished'])
+                  ->orderBy('round', 'desc')
+                  ->limit(5);
+            }])
+            ->where('year', date('Y'))
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
 
-        return view('dashboard', compact('pertandingans', 'sports', 'selectedSport'));
+        return view('dashboard', compact('pertandingans', 'sports', 'selectedSport', 'tournaments'));
     }
 
     public function adminDashboard()
@@ -547,5 +559,38 @@ class PertandinganController extends Controller
     {
         $tournament->delete();
         return back()->with('success', 'Turnamen berhasil dihapus!');
+    }
+
+    /**
+     * Hapus semua data pertandingan (games, pertandingans, tournaments) saja
+     * Data master (users, teams, sports) tetap aman
+     */
+    public function clearAllMatches()
+    {
+        try {
+            \DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            
+            // Hapus games
+            $gamesCount = \App\Models\MatchGame::count();
+            \App\Models\MatchGame::query()->delete();
+            
+            // Hapus pertandingans
+            $matchesCount = \App\Models\Pertandingan::count();
+            \App\Models\Pertandingan::query()->delete();
+            
+            // Hapus tournaments
+            $tournamentsCount = \App\Models\Tournament::count();
+            \App\Models\Tournament::query()->delete();
+            
+            \DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
+            return back()->with('success', 
+                "Berhasil hapus: {$gamesCount} games, {$matchesCount} pertandingan, {$tournamentsCount} tournament. " .
+                "Data master (tim, sport, admin) tetap aman."
+            );
+        } catch (\Exception $e) {
+            \DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
+        }
     }
 }

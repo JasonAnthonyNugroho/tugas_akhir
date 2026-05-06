@@ -11,13 +11,17 @@
                     <div class="col-md-3">
                         <label>Tim A</label>
                         <select name="team_a" class="form-control" required>
-                            @foreach($teams as $team) <option value="{{ $team->id }}">{{ $team->name }}</option> @endforeach
+                            @foreach($teams as $team)
+                                <option value="{{ $team->id }}">{{ $team->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="col-md-3">
                         <label>Tim B</label>
                         <select name="team_b" class="form-control" required>
-                            @foreach($teams as $team) <option value="{{ $team->id }}">{{ $team->name }}</option> @endforeach
+                            @foreach($teams as $team)
+                                <option value="{{ $team->id }}">{{ $team->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="col-md-3">

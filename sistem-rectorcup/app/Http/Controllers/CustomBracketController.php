@@ -120,6 +120,27 @@ class CustomBracketController extends Controller
     }
 
     /**
+     * Public view bracket untuk guest
+     */
+    public function publicBracket(Tournament $tournament)
+    {
+        $tournament->load(['sport', 'teams', 'pertandingans.teamA', 'pertandingans.teamB', 'pertandingans.winner']);
+        
+        // Group matches by round
+        $rounds = $tournament->pertandingans
+            ->where('babak', '!=', 'Perebutan Juara 3')
+            ->groupBy('round')
+            ->sortKeys();
+        
+        // Get 3rd place match if exists
+        $thirdPlaceMatch = $tournament->pertandingans
+            ->where('babak', 'Perebutan Juara 3')
+            ->first();
+
+        return view('public.bracket-view', compact('tournament', 'rounds', 'thirdPlaceMatch'));
+    }
+
+    /**
      * Update bracket arrangement (drag-drop save)
      */
     public function updateArrangement(Request $request, Tournament $tournament)
