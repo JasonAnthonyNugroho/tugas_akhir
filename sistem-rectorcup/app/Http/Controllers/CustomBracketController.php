@@ -1,0 +1,284 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Sport;
+use App\Models\Team;
+use App\Models\Tournament;
+use App\Models\Pertandingan;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class CustomBracketController extends Controller
+{
+    /**
+     * Tampilkan halaman bracket builder
+     */
+    public function builder()
+    {
+        $sports = Sport::all();
+        $teams = Team::where('name', '!=', 'Seluruh Prodi')
+            ->orderBy('prodi')
+            ->orderBy('name')
+            ->get()
+            ->groupBy('prodi');
+        
+        return view('admin.bracket-builder', compact('sports', 'teams'));
+    }
+
+    /**
+     * Generate bracket preview (mentah) untuk di-arrange
+     */
+    public function preview(Request $request)
+    {
+        $request->validate([
+            'tournament_name' => 'required|string|max:255',
+            'sport_id' => 'required|exists:sports,id',
+            'team_ids' => 'required|array|min:2',
+            'team_ids.*' => 'exists:teams,id',
+            'bracket_size' => 'required|integer|in:4,8,16,32',
+        ]);
+
+        $sport = Sport::find($request->sport_id);
+        $selectedTeams = Team::whereIn('id', $request->team_ids)
+            ->orderByRaw('FIELD(id, ' . implode(',', $request->team_ids) . ')')
+            ->get();
+        
+        $bracketSize = $request->bracket_size;
+        $numRounds = log($bracketSize, 2);
+        
+        // Generate bracket structure
+        $bracket = $this->generateBracketStructure($bracketSize, $selectedTeams, $sport);
+        
+        return response()->json([
+            'success' => true,
+            'bracket' => $bracket,
+            'teams' => $selectedTeams,
+            'sport' => $sport,
+            'bracket_size' => $bracketSize,
+            'num_rounds' => $numRounds,
+        ]);
+    }
+
+    /**
+     * Save custom bracket dengan arrangement dari drag-drop
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'tournament_name' => 'required|string|max:255',
+            'sport_id' => 'required|exists:sports,id',
+            'arrangement' => 'required|array', // Format: [match_index => [team_a_id, team_b_id]]
+            'bracket_size' => 'required|integer|in:4,8,16,32',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        return DB::transaction(function () use ($request) {
+            // Buat tournament
+            $tournament = Tournament::create([
+                'name' => $request->tournament_name,
+                'sport_id' => $request->sport_id,
+                'type' => 'single_elimination',
+                'is_active' => true,
+                'year' => date('Y'),
+            ]);
+
+            // Attach teams ke tournament
+            $teamIds = collect($request->arrangement)->flatten()->unique()->filter()->values();
+            $tournament->teams()->attach($teamIds);
+
+            $bracketSize = $request->bracket_size;
+            $numRounds = log($bracketSize, 2);
+            
+            // Generate matches dengan arrangement yang sudah di-set
+            $this->createBracketMatches($tournament, $request->sport_id, $bracketSize, $numRounds, $request->arrangement, $request->keterangan);
+
+            return redirect()->route('admin.tournament.bracket.view', $tournament)
+                ->with('success', 'Custom bracket berhasil dibuat!');
+        });
+    }
+
+    /**
+     * View bracket yang sudah dibuat (Liquipedia style)
+     */
+    public function viewBracket(Tournament $tournament)
+    {
+        $tournament->load(['sport', 'teams', 'pertandingans.teamA', 'pertandingans.teamB', 'pertandingans.winner']);
+        
+        // Group matches by round
+        $rounds = $tournament->pertandingans
+            ->where('babak', '!=', 'Perebutan Juara 3')
+            ->groupBy('round')
+            ->sortKeys();
+        
+        // Get 3rd place match if exists
+        $thirdPlaceMatch = $tournament->pertandingans
+            ->where('babak', 'Perebutan Juara 3')
+            ->first();
+
+        return view('admin.bracket-view', compact('tournament', 'rounds', 'thirdPlaceMatch'));
+    }
+
+    /**
+     * Update bracket arrangement (drag-drop save)
+     */
+    public function updateArrangement(Request $request, Tournament $tournament)
+    {
+        $request->validate([
+            'arrangement' => 'required|array',
+        ]);
+
+        return DB::transaction(function () use ($request, $tournament) {
+            $round1Matches = $tournament->pertandingans()
+                ->where('round', 1)
+                ->orderBy('match_number')
+                ->get();
+
+            foreach ($request->arrangement as $index => $teamIds) {
+                if (isset($round1Matches[$index])) {
+                    $round1Matches[$index]->update([
+                        'team_a_id' => $teamIds[0] ?? null,
+                        'team_b_id' => $teamIds[1] ?? null,
+                    ]);
+                }
+            }
+
+            return response()->json(['success' => true, 'message' => 'Bracket arrangement updated!']);
+        });
+    }
+
+    /**
+     * Generate bracket structure untuk preview
+     */
+    private function generateBracketStructure($size, $teams, $sport)
+    {
+        $numRounds = log($size, 2);
+        $structure = [];
+        
+        // Pad teams dengan null (BYE) jika kurang dari size
+        $paddedTeams = $teams->toArray();
+        while (count($paddedTeams) < $size) {
+            $paddedTeams[] = null;
+        }
+
+        // Generate rounds dari Round 1 (paling bawah) sampai Final
+        for ($round = 1; $round <= $numRounds; $round++) {
+            $numMatches = $size / pow(2, $round);
+            $roundMatches = [];
+            
+            for ($matchNum = 1; $matchNum <= $numMatches; $matchNum++) {
+                $roundMatches[] = [
+                    'match_number' => $matchNum,
+                    'round' => $round,
+                    'babak' => $this->getBabakName($round, $numRounds),
+                    'team_a' => null,
+                    'team_b' => null,
+                    'winner' => null,
+                ];
+            }
+            
+            $structure[] = [
+                'round' => $round,
+                'babak' => $this->getBabakName($round, $numRounds),
+                'matches' => $roundMatches,
+            ];
+        }
+
+        // Isi Round 1 dengan teams yang tersedia
+        $teamIndex = 0;
+        foreach ($structure[0]['matches'] as &$match) {
+            if ($teamIndex < count($paddedTeams) && $paddedTeams[$teamIndex]) {
+                $match['team_a'] = $paddedTeams[$teamIndex];
+            }
+            $teamIndex++;
+            
+            if ($teamIndex < count($paddedTeams) && $paddedTeams[$teamIndex]) {
+                $match['team_b'] = $paddedTeams[$teamIndex];
+            }
+            $teamIndex++;
+        }
+
+        return $structure;
+    }
+
+    /**
+     * Create actual matches di database
+     */
+    private function createBracketMatches($tournament, $sportId, $bracketSize, $numRounds, $arrangement, $keterangan)
+    {
+        $roundMatches = [];
+
+        // Buat matches dari Final ke Round 1
+        for ($round = $numRounds; $round >= 1; $round--) {
+            $numMatches = $bracketSize / pow(2, $round);
+            $roundMatches[$round] = [];
+
+            for ($matchNum = 1; $matchNum <= $numMatches; $matchNum++) {
+                $nextMatch = null;
+                if ($round < $numRounds) {
+                    $parentMatchIndex = ceil($matchNum / 2) - 1;
+                    $nextMatch = $roundMatches[$round + 1][$parentMatchIndex] ?? null;
+                }
+
+                $match = Pertandingan::create([
+                    'sport_id' => $sportId,
+                    'tournament_id' => $tournament->id,
+                    'round' => $round,
+                    'match_number' => $matchNum,
+                    'next_match_id' => $nextMatch ? $nextMatch->id : null,
+                    'status' => 'scheduled',
+                    'babak' => $this->getBabakName($round, $numRounds),
+                    'waktu_tanding' => now()->addDays($round),
+                    'lokasi' => 'TBA',
+                    'keterangan' => $keterangan,
+                ]);
+
+                $roundMatches[$round][] = $match;
+            }
+        }
+
+        // Isi Round 1 dengan arrangement dari drag-drop
+        $round1Matches = $roundMatches[1];
+        foreach ($arrangement as $index => $teamIds) {
+            if (isset($round1Matches[$index])) {
+                $round1Matches[$index]->update([
+                    'team_a_id' => $teamIds[0] ?? null,
+                    'team_b_id' => $teamIds[1] ?? null,
+                ]);
+            }
+        }
+
+        // Buat match Perebutan Juara 3 jika ada minimal 4 tim
+        if ($bracketSize >= 4) {
+            Pertandingan::create([
+                'sport_id' => $sportId,
+                'tournament_id' => $tournament->id,
+                'round' => $numRounds - 1,
+                'match_number' => 99,
+                'next_match_id' => null,
+                'status' => 'scheduled',
+                'babak' => 'Perebutan Juara 3',
+                'waktu_tanding' => now()->addDays($numRounds),
+                'lokasi' => 'TBA',
+                'keterangan' => $keterangan,
+            ]);
+        }
+    }
+
+    /**
+     * Get nama babak berdasarkan round
+     */
+    private function getBabakName($round, $totalRounds)
+    {
+        $diff = $totalRounds - $round;
+        
+        switch ($diff) {
+            case 0: return 'Grand Final';
+            case 1: return 'Semi Final';
+            case 2: return 'Quarter Final';
+            case 3: return 'Round of 16';
+            case 4: return 'Round of 32';
+            default: return 'Round ' . $round;
+        }
+    }
+}

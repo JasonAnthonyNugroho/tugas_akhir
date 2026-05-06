@@ -18,6 +18,13 @@ class ScoreUpdated implements ShouldBroadcast
     public function __construct(Pertandingan $pertandingan)
     {
         $this->pertandingan = $pertandingan;
+        
+        \Log::info('ScoreUpdated event created', [
+            'match_id' => $pertandingan->id,
+            'score_a' => $pertandingan->score_a,
+            'score_b' => $pertandingan->score_b,
+            'status' => $pertandingan->status,
+        ]);
     }
 
     public function broadcastOn(): array
@@ -29,12 +36,16 @@ class ScoreUpdated implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        return [
+        $data = [
             'id' => $this->pertandingan->id,
             'score_a' => $this->pertandingan->score_a,
             'score_b' => $this->pertandingan->score_b,
             'status' => $this->pertandingan->status,
         ];
+        
+        \Log::info('ScoreUpdated broadcasting with data', $data);
+        
+        return $data;
     }
 
     public function broadcastAs(): string

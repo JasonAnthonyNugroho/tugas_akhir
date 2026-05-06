@@ -32,6 +32,26 @@
             forceTLS: reverbScheme === 'https',
             enabledTransports: ['ws', 'wss'],
         });
+        
+        // Debug: Monitor Reverb connection status
+        window.Echo.connector.pusher.connection.bind('connected', function() {
+            console.log('Reverb: Connected successfully!');
+        });
+        
+        window.Echo.connector.pusher.connection.bind('disconnected', function() {
+            console.warn('Reverb: Disconnected!');
+        });
+        
+        window.Echo.connector.pusher.connection.bind('error', function(err) {
+            console.error('Reverb: Connection error:', err);
+        });
+        
+        console.log('Reverb initialized with config:', {
+            key: reverbKey,
+            host: reverbHost,
+            port: reverbPort,
+            scheme: reverbScheme
+        });
     </script>
     <title>Rector Cup - @yield('title')</title>
     <style>

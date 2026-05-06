@@ -36,7 +36,7 @@
             </div>
         @else
             @foreach($liveMatches as $p)
-                <div class="col-lg-6 mb-4">
+                <div class="col-lg-6 mb-4" data-match-id="{{ $p->id }}">
                     <div class="card h-100 border-0 shadow-lg" style="border-top: 4px solid #ef4444 !important;">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -253,7 +253,7 @@
                                     </thead>
                                     <tbody>
                                         @foreach($tMatches as $p)
-                                            <tr>
+                                            <tr data-match-id="{{ $p->id }}">
                                                 <td class="small text-muted align-middle">{{ $p->babak }}</td>
                                                 <td class="align-middle">
                                                     <div class="text-white small font-weight-bold">{{ $p->waktu_tanding->format('H:i') }}</div>
@@ -303,7 +303,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach($iMatches as $p)
-                                        <tr>
+                                        <tr data-match-id="{{ $p->id }}">
                                             <td class="align-middle">
                                                 <span class="badge px-3 py-1" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-primary); border-radius: 8px; font-weight: 600;">
                                                     {{ $p->sport->nama_sport ?? 'Tournament' }}
@@ -446,6 +446,26 @@
                     .listen('.match.created', function(data) {
                         console.log('Admin Skor: New match created via Reverb:', data);
                         showSkorNotification('Pertandingan baru dibuat! Refresh halaman untuk melihat.', 'info');
+                    })
+                    .listen('.match.status.updated', function(data) {
+                        console.log('Admin Skor: Match status updated via Reverb:', data);
+                        
+                        // Handle status finished - remove from page
+                        if (data.status === 'finished') {
+                            const matchCard = document.querySelector(`[data-match-id="${data.id}"]`);
+                            if (matchCard) {
+                                // Animasi fade out
+                                matchCard.style.transition = 'all 0.5s ease';
+                                matchCard.style.opacity = '0';
+                                matchCard.style.transform = 'scale(0.9)';
+                                
+                                setTimeout(() => {
+                                    matchCard.remove();
+                                }, 500);
+                                
+                                showSkorNotification(`Pertandingan selesai! ${data.data.team_a || 'Tim A'} ${data.data.score_a} - ${data.data.score_b} ${data.data.team_b || 'Tim B'}`, 'success');
+                            }
+                        }
                     });
                 
                 console.log('Laravel Reverb initialized for Admin Skor');

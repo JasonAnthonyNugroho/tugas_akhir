@@ -9,9 +9,13 @@
             <p class="text-muted">Kelola bracket, jadwal, dan aktivasi pertandingan Rector Cup.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.tournament.bracket.builder') }}" 
+               class="btn btn-success shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0 mr-2">
+                <i class="bi bi-magic mr-2"></i> Custom Bracket Builder
+            </a>
             <button type="button" class="btn btn-outline-primary shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0 mr-2"
                 data-toggle="modal" data-target="#generateBracketModal">
-                <i class="bi bi-diagram-3 mr-2"></i> Buat Bracket
+                <i class="bi bi-diagram-3 mr-2"></i> Bracket Otomatis
             </button>
             <button type="button" class="btn btn-primary shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0"
                 data-toggle="modal" data-target="#addMatchModal">
@@ -51,9 +55,9 @@
                                         <i class="bi bi-three-dots-vertical h5 mb-0"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-right bg-dark border-secondary shadow-lg">
-                                        <button class="dropdown-item text-white small" onclick="previewBracket({{ $tournament->id }})">
-                                            <i class="bi bi-eye mr-2"></i> Preview Bracket
-                                        </button>
+                                        <a href="{{ route('admin.tournament.bracket.view', $tournament) }}" class="dropdown-item text-white small">
+                                            <i class="bi bi-eye mr-2"></i> View Bracket
+                                        </a>
                                         <div class="dropdown-divider border-secondary"></div>
                                         <form action="{{ route('admin.bracket.reroll', $tournament->id) }}" method="POST" onsubmit="return confirm('Reroll akan mengacak ulang semua tim di bracket. Lanjutkan?')">
                                             @csrf
@@ -568,6 +572,26 @@
                         
                         // Refresh page to show new match
                         showAdminNotification('Pertandingan baru dibuat! Refresh halaman untuk melihat.', 'info');
+                    })
+                    .listen('.match.status.updated', function(data) {
+                        console.log('Admin: Match status updated via Reverb:', data);
+                        
+                        // Handle status finished - remove from table
+                        if (data.status === 'finished') {
+                            const matchRow = document.querySelector(`tr[data-match-id="${data.id}"]`);
+                            if (matchRow) {
+                                // Animasi fade out
+                                matchRow.style.transition = 'all 0.5s ease';
+                                matchRow.style.opacity = '0';
+                                matchRow.style.transform = 'translateX(-100%)';
+                                
+                                setTimeout(() => {
+                                    matchRow.remove();
+                                }, 500);
+                                
+                                showAdminNotification(`Pertandingan ${data.data.team_a} vs ${data.data.team_b} selesai!`, 'success');
+                            }
+                        }
                     });
                 
                 console.log('Laravel Reverb initialized for Admin Dashboard');
@@ -728,8 +752,9 @@
                                 </div>
                                 <div class="col-md-6 mb-4">
                                     <label class="small font-weight-bold text-uppercase text-muted mb-2">Tim A</label>
-                                    <select name="team_a_id" class="form-control" required>
-                                        @foreach($teams as $team)
+                                    <select name="team_a_id" class="form-control">
+                                        <option value="" {{ is_null($p->team_a_id) ? 'selected' : '' }} disabled>-- TBD (To Be Determined) --</option>
+                                        @foreach($teams->where('prodi', '!=', 'TBD') as $team)
                                             <option value="{{ $team->id }}" {{ $p->team_a_id == $team->id ? 'selected' : '' }}>
                                                 {{ $team->name }}
                                             </option>
@@ -738,8 +763,9 @@
                                 </div>
                                 <div class="col-md-6 mb-4">
                                     <label class="small font-weight-bold text-uppercase text-muted mb-2">Tim B</label>
-                                    <select name="team_b_id" class="form-control" required>
-                                        @foreach($teams as $team)
+                                    <select name="team_b_id" class="form-control">
+                                        <option value="" {{ is_null($p->team_b_id) ? 'selected' : '' }} disabled>-- TBD (To Be Determined) --</option>
+                                        @foreach($teams->where('prodi', '!=', 'TBD') as $team)
                                             <option value="{{ $team->id }}" {{ $p->team_b_id == $team->id ? 'selected' : '' }}>
                                                 {{ $team->name }}
                                             </option>

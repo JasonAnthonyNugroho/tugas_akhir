@@ -1,66 +1,171 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <h1 align="center">🏆 Sistem Rector Cup</h1>
+  <p align="center">Platform Manajemen Pertandingan Multi-Cabang Olahraga</p>
 </p>
 
-## About Laravel
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Production%20Ready-brightgreen" alt="Status">
+  <img src="https://img.shields.io/badge/Realtime-Enabled-blue" alt="Realtime">
+  <img src="https://img.shields.io/badge/Mobile%20Friendly-Yes-success" alt="Mobile">
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📋 Deskripsi
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Sistem Rector Cup adalah platform untuk mengelola pertandingan olahraga multi-cabang (Basket, Futsal, Badminton, Voli, Mobile Legends, PUBG Mobile) secara real-time. Sistem ini memungkinkan panitia untuk:
 
-## Learning Laravel
+- 📅 Membuat jadwal pertandingan otomatis atau manual
+- 🏗️ Generate bracket tournament secara otomatis
+- 📊 Mengupdate skor pertandingan live
+- 📱 Memberikan informasi real-time ke penonton/mahasiswa
+- 🏆 Mengelola klasemen dan riwayat pertandingan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🎯 Fitur Utama
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🏠 Untuk Penonton/Mahasiswa
+- **Live Score Updates** - Melihat skor pertandingan secara real-time tanpa refresh
+- **Jadwal Pertandingan** - Melihat jadwal lengkap semua cabang olahraga
+- **Riwayat Pertandingan** - Melihat hasil pertandingan yang sudah selesai
+- **Bracket Tournament** - Melihat struktur turnamen dan progress pertandingan
 
-## Laravel Sponsors
+### 🎛️ Untuk Panitia/Admin
+- **Dashboard Manajemen** - Pusat kontrol untuk semua pertandingan
+- **Generate Bracket Otomatis** - Buat bracket turnamen dengan sekali klik
+- **Kelola Skor Real-time** - Update skor langsung muncul di layar penonton
+- **Multi-Prodi Support** - Mendukung pertandingan antar prodi atau semua prodi
+- **Edit Jadwal** - Ubah jadwal atau data pertandingan jika ada kesalahan
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🚀 Cara Menggunakan Sistem
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 1. Login sebagai Panitia
+- Akses halaman login
+- Masukkan kredensial admin/panitia
+- Dashboard akan menampilkan ringkasan semua pertandingan
 
-## Contributing
+### 2. Membuat Bracket Turnamen
+```
+Dashboard → Klik "Buat Bracket" → Isi Form:
+• Nama Tournament (contoh: Rector Cup Basket 2026)
+• Jumlah Tim (4/8/16 tim atau otomatis)
+• Cabang Olahraga (Basket/Futsal/Badminton/Voli/ML/PM)
+• Pilih Tim Peserta (dari berbagai prodi atau "Semua Prodi")
+• Keterangan Bracket (Basket Putra/Putri, dll)
+→ Klik "Generate Bracket"
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 3. Mengelola Skor Pertandingan
+```
+Sidebar → "Kelola Skor" atau Dashboard → Klik "Update Skor"
 
-## Code of Conduct
+Untuk pertandingan LIVE:
+• Tombol + untuk menambah skor
+• Tombol - untuk mengurangi skor
+• Skor update secara otomatis ke semua penonton
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Untuk PUBG Mobile:
+• Masukkan total point tim
+• Update otomatis tampil ke leaderboard
+```
 
-## Security Vulnerabilities
+### 4. Mengedit Jadwal/Pertandingan
+```
+Dashboard → Tabel Pertandingan → Klik "Edit" pada baris pertandingan
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Bisa mengedit:
+• Cabang Olahraga
+• Tim A dan Tim B
+• Waktu Tanding
+• Lokasi/GOR
+• Keterangan (contoh: Basket Putra)
+```
 
-## License
+### 5. Aktivasi Pertandingan Live
+```
+Dashboard → Klik "Set Live" pada pertandingan yang akan dimulai
+atau
+Sidebar → "Kelola Skor" → Pilih pertandingan → "Mulai Live"
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Status akan berubah dari SCHEDULED menjadi LIVE
+```
+
+---
+
+## 📝 Tips Penggunaan
+
+### 📌 Sebelum Membuat Bracket
+- Pastikan semua tim sudah didaftarkan di sistem
+- Untuk PUBG Mobile: Pilih opsi "Semua Prodi" agar semua prodi bisa berpartisipasi
+
+### 📌 Mengelola Skor
+- Sistem support Best of 3 (BO3) untuk cabang seperti Badminton/Mobile Legends
+- Screenshot hasil pertandingan bisa diupload untuk validasi
+- Status pertandingan otomatis finish ketika skor final dimasukkan
+
+### 📌 Kontrol Akses
+- **Admin**: Bisa mengelola jadwal, skor, bracket, dan master data
+- **Penonton**: Hanya bisa melihat informasi (tidak perlu login)
+
+---
+
+## 🔄 Alur Kerja Sistem
+
+```
+1. Panitia Membuat Bracket
+         ↓
+2. Generate Jadwal Otomatis
+         ↓
+3. Panitia Aktifkan Live Mode
+         ↓
+4. Update Skor Real-time
+         ↓
+5. Penonton Melihat Live Score
+         ↓
+6. Pertandingan Selesai → Auto Archive
+```
+
+---
+
+## 💡 FAQ (Pertanyaan Umum)
+
+**Q: Apakah penonton perlu login?**
+A: Tidak, penonton bisa langsung mengakses dan melihat informasi tanpa login.
+
+**Q: Bagaimana jika salah memasukkan skor?**
+A: Admin bisa edit skor kapan saja melalui halaman "Kelola Skor".
+
+**Q: Apakah bisa mengubah jadwal setelah bracket dibuat?**
+A: Ya, admin bisa edit jadwal, tim, atau lokasi melalui tombol "Edit".
+
+**Q: Bagaimana sistem handle cabang olahraga berbeda?**
+A: Setiap cabang memiliki format skor yang sesuai:
+- Basket/Futsal/Voli: Skor total
+- Badminton/ML: Best of 3 (Game 1, 2, 3)
+- PUBG Mobile: Point system
+
+**Q: Apakah data bisa diakses dari HP?**
+A: Ya, sistem fully responsive dan bisa diakses dari mobile browser.
+
+---
+
+## 📞 Kontak & Dukungan
+
+Jika ada pertanyaan atau masalah dalam penggunaan sistem, silakan hubungi:
+- **Developer/Technical Support**: [Isi nama/email kamu]
+- **Event Coordinator**: [Isi kontak koordinator]
+
+---
+
+## 🎉 Selamat Menggunakan!
+
+Semoga sistem ini memudahkan pelaksanaan Rector Cup dan memberikan pengalaman terbaik bagi panitia maupun penonton!
+
+---
+
+<p align="center">
+  <sub>Dibuat dengan ❤️ untuk Rector Cup</sub>
+</p>

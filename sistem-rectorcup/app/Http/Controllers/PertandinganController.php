@@ -82,9 +82,24 @@ class PertandinganController extends Controller
             'match_ids.*' => 'exists:pertandingans,id',
         ]);
 
+        $matches = Pertandingan::whereIn('id', $request->match_ids)
+            ->where('status', 'scheduled')
+            ->get();
+        
         Pertandingan::whereIn('id', $request->match_ids)
             ->where('status', 'scheduled')
             ->update(['status' => 'live']);
+        
+        // Broadcast status update untuk setiap match
+        foreach ($matches as $match) {
+            broadcast(new \App\Events\MatchStatusUpdated($match->id, 'live', [
+                'id' => $match->id,
+                'status' => 'live',
+                'team_a' => $match->teamA?->name,
+                'team_b' => $match->teamB?->name,
+                'sport' => $match->sport?->nama_sport,
+            ]));
+        }
 
         return back()->with('success', count($request->match_ids) . ' pertandingan berhasil diaktifkan ke LIVE!');
     }
@@ -125,7 +140,8 @@ class PertandinganController extends Controller
                 }
             }
 
-            return back()->with('success', 'Bracket berhasil di-reroll dengan urutan tim baru!');
+            return redirect()->route('admin.tournament.bracket.view', $tournament)
+            ->with('success', 'Bracket berhasil di-reroll dengan urutan tim baru!');
         });
     }
 
@@ -223,7 +239,7 @@ class PertandinganController extends Controller
 
         $pertandingans = Pertandingan::with(['teamA', 'teamB', 'sport', 'games', 'tournament'])
             ->orderBy('status', 'asc') // live akan muncul lebih dulu
-            ->orderBy('waktu_tanding', 'desc')
+            ->orderBy('waktu_tanding', 'asc') // yang paling awal/jadul dulu
             ->get();
 
         $groupedMatches = $pertandingans->groupBy(function ($item) {
@@ -335,7 +351,35 @@ class PertandinganController extends Controller
             $pertandingan->update($updateData);
         }
 
+        // Refresh model to get latest data
+        $pertandingan->refresh();
+        
+        // Debug: Log broadcast attempt
+        \Log::info('Broadcasting ScoreUpdated', [
+            'match_id' => $pertandingan->id,
+            'score_a' => $pertandingan->score_a,
+            'score_b' => $pertandingan->score_b,
+            'status' => $pertandingan->status,
+        ]);
+        
         broadcast(new ScoreUpdated($pertandingan));
+        
+        // Jika status berubah ke finished, broadcast status update juga
+        if ($request->status === 'finished') {
+            \Log::info('Broadcasting MatchStatusUpdated for finished match', [
+                'match_id' => $pertandingan->id,
+            ]);
+            
+            broadcast(new \App\Events\MatchStatusUpdated($pertandingan->id, 'finished', [
+                'id' => $pertandingan->id,
+                'status' => 'finished',
+                'team_a' => $pertandingan->teamA?->name,
+                'team_b' => $pertandingan->teamB?->name,
+                'score_a' => $pertandingan->score_a,
+                'score_b' => $pertandingan->score_b,
+                'sport' => $pertandingan->sport?->nama_sport,
+            ]));
+        }
 
         return back()->with([
             'success' => 'Data pertandingan berhasil diperbarui!',
@@ -347,8 +391,8 @@ class PertandinganController extends Controller
     {
         $request->validate([
             'sport_id' => 'required|exists:sports,id',
-            'team_a_id' => 'required|exists:teams,id',
-            'team_b_id' => 'required|exists:teams,id|different:team_a_id',
+            'team_a_id' => 'nullable|exists:teams,id',
+            'team_b_id' => 'nullable|exists:teams,id|different:team_a_id',
             'waktu_tanding' => 'required|date',
             'lokasi' => 'required|string|max:255',
             'keterangan' => 'nullable|string|max:255',
@@ -356,8 +400,8 @@ class PertandinganController extends Controller
 
         $pertandingan->update([
             'sport_id' => $request->sport_id,
-            'team_a_id' => $request->team_a_id,
-            'team_b_id' => $request->team_b_id,
+            'team_a_id' => $request->team_a_id, // Bisa null untuk TBD
+            'team_b_id' => $request->team_b_id, // Bisa null untuk TBD
             'waktu_tanding' => $request->waktu_tanding,
             'lokasi' => $request->lokasi,
             'keterangan' => $request->keterangan,

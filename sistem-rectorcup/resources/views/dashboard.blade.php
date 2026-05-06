@@ -4,8 +4,17 @@
 
 @section('content')
     <div class="mb-4">
-        <h2 class="font-weight-bold mb-1">Pertandingan Berlangsung</h2>
-        <p class="text-muted">Pantau hasil pertandingan secara real-time.</p>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <h2 class="font-weight-bold mb-1">Pertandingan Berlangsung</h2>
+                <p class="text-muted">Pantau hasil pertandingan secara real-time.</p>
+            </div>
+            <div id="connectionStatus" class="small">
+                <span class="badge badge-secondary" style="border-radius: 100px;">
+                    <i class="bi bi-wifi-off mr-1"></i> Connecting...
+                </span>
+            </div>
+        </div>
     </div>
 
     @if($pertandingans->isEmpty())
@@ -136,46 +145,117 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing Echo listeners...');
+    
+    const statusBadge = document.getElementById('connectionStatus');
+    
+    function updateConnectionStatus(connected) {
+        if (statusBadge) {
+            if (connected) {
+                statusBadge.innerHTML = `
+                    <span class="badge badge-success" style="border-radius: 100px;">
+                        <i class="bi bi-wifi mr-1"></i> Live
+                    </span>
+                `;
+            } else {
+                statusBadge.innerHTML = `
+                    <span class="badge badge-danger" style="border-radius: 100px;">
+                        <i class="bi bi-wifi-off mr-1"></i> Disconnected
+                    </span>
+                `;
+            }
+        }
+    }
+    
+    // Check Echo connection
+    if (typeof window.Echo === 'undefined') {
+        console.error('Echo is not defined! Reverb not initialized properly.');
+        updateConnectionStatus(false);
+        return;
+    }
+    
+    // Monitor connection status
+    window.Echo.connector.pusher.connection.bind('connected', function() {
+        console.log('Reverb connected!');
+        updateConnectionStatus(true);
+    });
+    
+    window.Echo.connector.pusher.connection.bind('disconnected', function() {
+        console.warn('Reverb disconnected!');
+        updateConnectionStatus(false);
+    });
+    
+    window.Echo.connector.pusher.connection.bind('error', function(err) {
+        console.error('Reverb error:', err);
+        updateConnectionStatus(false);
+    });
+    
+    console.log('Echo is ready, subscribing to scores channel...');
+    
     // Listen for score updates
     window.Echo.channel('scores')
         .listen('.score.updated', function(data) {
-            console.log('Score updated:', data);
+            console.log('Score updated received:', data);
             updateMatchScore(data);
         })
         .listen('.match.created', function(data) {
-            console.log('Match created:', data);
+            console.log('Match created received:', data);
             addNewMatch(data);
+        })
+        .listen('.match.status.updated', function(data) {
+            console.log('Match status updated received:', data);
+            updateMatchStatus(data);
         });
+    
+    console.log('Echo listeners registered successfully');
 
     // Function to update match score in UI
     function updateMatchScore(data) {
         const matchCard = document.querySelector(`[data-id="${data.id}"]`);
         if (matchCard) {
+            // Jika status finished, hapus dari dashboard dengan animasi
+            if (data.status === 'finished') {
+                console.log('Match finished, removing from dashboard:', data.id);
+                
+                // Animasi fade out
+                matchCard.style.transition = 'all 0.5s ease';
+                matchCard.style.opacity = '0';
+                matchCard.style.transform = 'scale(0.8)';
+                
+                // Hapus dari DOM setelah animasi
+                setTimeout(() => {
+                    matchCard.remove();
+                    
+                    // Cek jika tidak ada pertandingan lagi, tampilkan pesan kosong
+                    const remainingCards = document.querySelectorAll('.match-card');
+                    if (remainingCards.length === 0) {
+                        showEmptyState();
+                    }
+                }, 500);
+                
+                showNotification('Pertandingan selesai! Dipindahkan ke history.', 'success');
+                return;
+            }
+            
             // Update scores with animation
             const scoreAElement = matchCard.querySelector('.score-a');
             const scoreBElement = matchCard.querySelector('.score-b');
             
-            if (scoreAElement && scoreBElement) {
-                // Add animation class
-                scoreAElement.style.transition = 'all 0.3s ease';
-                scoreBElement.style.transition = 'all 0.3s ease';
-                
-                // Flash effect
-                scoreAElement.style.transform = 'scale(1.1)';
-                scoreBElement.style.transform = 'scale(1.1)';
-                scoreAElement.style.color = '#10b981';
-                scoreBElement.style.color = '#10b981';
-                
-                // Update scores
+            if (scoreAElement) {
                 scoreAElement.textContent = data.score_a;
-                scoreBElement.textContent = data.score_b;
-                
-                // Reset animation after 300ms
+                scoreAElement.style.transition = 'all 0.3s ease';
+                scoreAElement.style.transform = 'scale(1.2)';
                 setTimeout(() => {
                     scoreAElement.style.transform = 'scale(1)';
+                }, 300);
+            }
+            
+            if (scoreBElement) {
+                scoreBElement.textContent = data.score_b;
+                scoreBElement.style.transition = 'all 0.3s ease';
+                scoreBElement.style.transform = 'scale(1.2)';
+                setTimeout(() => {
                     scoreBElement.style.transform = 'scale(1)';
-                    scoreAElement.style.color = '';
-                    scoreBElement.style.color = '';
                 }, 300);
             }
             
@@ -184,6 +264,82 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show notification
             showNotification('Skor diperbarui!', 'success');
+        }
+    }
+    
+    // Function to show empty state when no matches
+    function showEmptyState() {
+        const matchContainer = document.getElementById('matchContainer');
+        if (matchContainer && matchContainer.children.length === 0) {
+            const parent = matchContainer.parentElement;
+            parent.innerHTML = `
+                <div class="card border-0 py-5 text-center" style="background: rgba(255,255,255,0.02); border-radius: 24px;">
+                    <div class="card-body">
+                        <div class="bg-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
+                            style="width: 80px; height: 80px; background: rgba(255,255,255,0.05) !important;">
+                            <i class="bi bi-calendar-x text-muted h2 mb-0"></i>
+                        </div>
+                        <h5 class="font-weight-bold text-white">Tidak Ada Pertandingan</h5>
+                        <p class="text-muted mx-auto mb-0" style="max-width: 400px;">Semua pertandingan sudah selesai. Cek halaman History untuk melihat hasil.</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // Function to update match status
+    function updateMatchStatus(data) {
+        const matchCard = document.querySelector(`[data-id="${data.id}"]`);
+        if (matchCard) {
+            const badgeContainer = matchCard.querySelector('.badge-live-container');
+            if (badgeContainer) {
+                if (data.status === 'live') {
+                    badgeContainer.innerHTML = `
+                        <div class="badge-live">
+                            <span class="live-dot"></span> LIVE
+                        </div>
+                    `;
+                    
+                    // Add flash animation to card
+                    matchCard.style.transition = 'all 0.5s ease';
+                    matchCard.style.boxShadow = '0 0 30px rgba(239, 68, 68, 0.5)';
+                    setTimeout(() => {
+                        matchCard.style.boxShadow = '';
+                    }, 2000);
+                } else if (data.status === 'scheduled') {
+                    badgeContainer.innerHTML = `
+                        <span class="badge badge-dark px-3 py-1 text-uppercase" style="border-radius: 100px; background: rgba(255,255,255,0.05);">
+                            Terjadwal
+                        </span>
+                    `;
+                } else if (data.status === 'finished') {
+                    badgeContainer.innerHTML = `
+                        <span class="badge badge-success px-3 py-1 text-uppercase" style="border-radius: 100px;">
+                            Selesai
+                        </span>
+                    `;
+                    
+                    // Hapus dari dashboard setelah 2 detik (kasih waktu user lihat hasil)
+                    setTimeout(() => {
+                        console.log('Match finished, removing from dashboard:', data.id);
+                        matchCard.style.transition = 'all 0.5s ease';
+                        matchCard.style.opacity = '0';
+                        matchCard.style.transform = 'scale(0.8)';
+                        
+                        setTimeout(() => {
+                            matchCard.remove();
+                            const remainingCards = document.querySelectorAll('.match-card');
+                            if (remainingCards.length === 0) {
+                                showEmptyState();
+                            }
+                        }, 500);
+                        
+                        showNotification('Pertandingan selesai! Dipindahkan ke history.', 'success');
+                    }, 2000);
+                }
+                
+                console.log('Status updated for match', data.id, 'to', data.status);
+            }
         }
     }
     

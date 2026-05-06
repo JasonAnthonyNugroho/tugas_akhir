@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PertandinganController;
+use App\Http\Controllers\CustomBracketController;
 use Illuminate\Support\Facades\Route;
 
 // Jalur Publik (Mahasiswa)
@@ -26,4 +27,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/pertandingan/bulk-live', [PertandinganController::class, 'bulkLive'])->name('pertandingan.bulk-live');
     Route::patch('/pertandingan/{pertandingan}/update-score', [PertandinganController::class, 'updateScore']);
     Route::patch('/pertandingan/{pertandingan}', [PertandinganController::class, 'update'])->name('pertandingan.update');
+    
+    // Custom Bracket Builder Routes
+    Route::get('/admin/bracket-builder', [CustomBracketController::class, 'builder'])->name('admin.tournament.bracket.builder');
+    Route::post('/admin/bracket-builder/preview', [CustomBracketController::class, 'preview'])->name('admin.tournament.bracket.preview');
+    Route::post('/admin/bracket-builder/store', [CustomBracketController::class, 'store'])->name('admin.tournament.bracket.store');
+    Route::get('/admin/tournament/{tournament}/bracket', [CustomBracketController::class, 'viewBracket'])->name('admin.tournament.bracket.view');
+    Route::post('/admin/tournament/{tournament}/arrangement', [CustomBracketController::class, 'updateArrangement'])->name('admin.tournament.bracket.arrangement');
 });
