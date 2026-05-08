@@ -4,706 +4,659 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    {{-- Header --}}
-    <div class="mb-4">
-        <h2 class="font-weight-bold text-white mb-2">
-            <i class="bi bi-magic mr-2"></i>Custom Bracket Builder
-        </h2>
-        <p class="text-muted">Flow: Konfigurasi → Pilih Tim → Generate Bracket → Drag & Drop Customisasi</p>
+
+    {{-- Header + Stepper --}}
+    <div class="bb-header mb-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+            <div>
+                <h2 class="font-weight-bold text-white mb-1">
+                    <i class="bi bi-magic mr-2"></i>Custom Bracket Builder
+                </h2>
+                <p class="text-muted mb-0">Konfigurasi turnamen dan pilih tim peserta. Lanjut ke arrange bracket di langkah berikutnya.</p>
+            </div>
+            <div class="bb-stepper d-flex align-items-center">
+                <div class="bb-step active">
+                    <div class="bb-step-num">1</div>
+                    <div class="bb-step-label">Konfigurasi & Pilih Tim</div>
+                </div>
+                <div class="bb-step-line"></div>
+                <div class="bb-step">
+                    <div class="bb-step-num">2</div>
+                    <div class="bb-step-label">Atur Bracket</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {{-- Step 1: Configuration & Team Selection --}}
-    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.03); border-radius: 20px;" id="step1Section">
-        <div class="card-header bg-transparent border-0 pt-4 px-4">
-            <h5 class="text-white font-weight-bold mb-0">
-                <span class="badge badge-primary mr-2">1</span>Konfigurasi & Pilih Tim
-            </h5>
-        </div>
-        <div class="card-body p-4">
-            <form id="bracketConfigForm">
-                @csrf
+    <form id="bracketConfigForm" action="{{ route('admin.tournament.bracket.arrange') }}" method="POST">
+        @csrf
+
+        {{-- ===== Section 1: Info Turnamen ===== --}}
+        <div class="bb-section mb-4">
+            <div class="bb-section-header">
+                <div class="bb-section-icon"><i class="bi bi-info-circle"></i></div>
+                <div>
+                    <h6 class="text-white font-weight-bold mb-0">Informasi Turnamen</h6>
+                    <small class="text-muted">Nama, jadwal, dan keterangan turnamen</small>
+                </div>
+            </div>
+            <div class="bb-section-body">
                 <div class="row">
-                    {{-- Tournament Name --}}
                     <div class="col-md-6 mb-3">
-                        <label class="text-white font-weight-bold">Nama Tournament</label>
-                        <input type="text" name="tournament_name" class="form-control bg-dark text-white border-secondary" 
-                            placeholder="Contoh: Rector Cup Futsal 2026" required>
+                        <label class="bb-label"><i class="bi bi-trophy mr-1"></i>Nama Tournament</label>
+                        <input type="text" name="tournament_name" class="bb-input" placeholder="Contoh: Rector Cup Futsal 2026" required>
                     </div>
-
-                    {{-- Sport --}}
                     <div class="col-md-6 mb-3">
-                        <label class="text-white font-weight-bold">Cabang Olahraga</label>
-                        <select name="sport_id" class="form-control bg-dark text-white border-secondary" required>
-                            <option value="">Pilih Sport...</option>
-                            @foreach($sports as $sport)
-                                <option value="{{ $sport->id }}">{{ $sport->nama_sport }}</option>
-                            @endforeach
-                        </select>
+                        <label class="bb-label"><i class="bi bi-pencil mr-1"></i>Keterangan <span class="text-muted">(opsional)</span></label>
+                        <input type="text" name="keterangan" class="bb-input" placeholder="Informasi tambahan">
                     </div>
-
-                    {{-- Bracket Size --}}
                     <div class="col-md-6 mb-3">
-                        <label class="text-white font-weight-bold">Ukuran Bracket</label>
-                        <select name="bracket_size" id="bracketSize" class="form-control bg-dark text-white border-secondary" required>
-                            <option value="4">4 Teams (Semi Final + Final)</option>
-                            <option value="8" selected>8 Teams (Quarter Final + Semi + Final)</option>
-                            <option value="16">16 Teams (Round of 16 + Quarter + Semi + Final)</option>
-                            <option value="32">32 Teams</option>
-                        </select>
-                        <small class="text-muted">Tim yang dipilih harus sama dengan ukuran bracket</small>
+                        <label class="bb-label"><i class="bi bi-calendar-event mr-1"></i>Tanggal Mulai</label>
+                        <input type="date" name="start_date" id="startDate" class="bb-input" required>
                     </div>
-
-                    {{-- Keterangan --}}
                     <div class="col-md-6 mb-3">
-                        <label class="text-white font-weight-bold">Keterangan (Opsional)</label>
-                        <input type="text" name="keterangan" class="form-control bg-dark text-white border-secondary" 
-                            placeholder="Informasi tambahan">
+                        <label class="bb-label"><i class="bi bi-calendar-check mr-1"></i>Tanggal Selesai</label>
+                        <input type="date" name="end_date" id="endDate" class="bb-input" required>
+                    </div>
+                    <div class="col-12 mb-1">
+                        <label class="bb-label">
+                            <i class="bi bi-table mr-1"></i>Link Google Sheet Skor <span class="text-muted">(opsional)</span>
+                        </label>
+                        <input type="url" name="external_score_url" id="externalScoreUrl"
+                               class="bb-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle mr-1"></i>
+                            Untuk cabang dengan poin manual seperti <strong>Catur</strong> atau <strong>PUBG Mobile</strong>.
+                            Jika diisi, halaman riwayat akan menampilkan tombol link ke sheet (bukan podium juara).
+                            Pastikan sheet sudah di-share <em>"Anyone with the link"</em>.
+                        </small>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                {{-- Team Selection --}}
-                <div class="mt-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="text-white font-weight-bold mb-0">
-                            Pilih Tim Peserta
-                            <span class="text-muted font-weight-normal">- Pilih sesuai ukuran bracket</span>
+        {{-- ===== Section 2: Sport (visual picker) ===== --}}
+        <div class="bb-section mb-4">
+            <div class="bb-section-header">
+                <div class="bb-section-icon"><i class="bi bi-controller"></i></div>
+                <div>
+                    <h6 class="text-white font-weight-bold mb-0">Cabang Olahraga</h6>
+                    <small class="text-muted">Pilih satu cabang untuk turnamen ini</small>
+                </div>
+            </div>
+            <div class="bb-section-body">
+                <div class="sport-grid">
+                    @foreach($sports as $sport)
+                        <label class="sport-card">
+                            <input type="radio" name="sport_id" value="{{ $sport->id }}" required>
+                            <div class="sport-card-inner">
+                                <i class="bi {{ $sport->icon ?? 'bi-trophy' }} sport-icon"></i>
+                                <span class="sport-name">{{ $sport->nama_sport }}</span>
+                                <i class="bi bi-check-circle-fill sport-check"></i>
+                            </div>
                         </label>
-                        <div id="selectionInfo" class="badge badge-secondary">
-                            0 / 8 tim dipilih
-                        </div>
-                    </div>
-                    
-                    {{-- All Teams Grid --}}
-                    <div id="teamGrid" class="row">
-                        @foreach($teams as $prodi => $prodiTeams)
-                            <div class="col-md-6 col-lg-4 mb-3">
-                                <div class="card bg-dark border-secondary h-100">
-                                    <div class="card-header bg-transparent border-secondary py-2">
-                                        <span class="text-white font-weight-bold">{{ $prodi }}</span>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <div class="d-flex flex-wrap gap-2">
-                                            @foreach($prodiTeams as $team)
-                                                <div class="team-select-card" 
-                                                     data-team-id="{{ $team->id }}"
-                                                     data-team-name="{{ $team->name }}"
-                                                     onclick="toggleTeam(this)">
-                                                    <span class="badge badge-dark px-2 py-1" style="cursor: pointer; font-size: 0.8rem;">
-                                                        {{ $team->name }}
-                                                    </span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        {{-- ===== Section 3: Bracket Size (card visual) ===== --}}
+        <div class="bb-section mb-4">
+            <div class="bb-section-header">
+                <div class="bb-section-icon"><i class="bi bi-diagram-3"></i></div>
+                <div>
+                    <h6 class="text-white font-weight-bold mb-0">Ukuran Bracket</h6>
+                    <small class="text-muted">Jumlah tim akan menyesuaikan ukuran</small>
+                </div>
+            </div>
+            <div class="bb-section-body">
+                <div class="size-grid">
+                    @php
+                        $sizes = [
+                            ['v' => 4,  'label' => '4 Tim',  'desc' => 'Semi Final + Final',                'rounds' => 2],
+                            ['v' => 8,  'label' => '8 Tim',  'desc' => 'Quarter + Semi + Final',            'rounds' => 3],
+                            ['v' => 16, 'label' => '16 Tim', 'desc' => 'Round of 16 + Quarter + Semi + Final','rounds' => 4],
+                            ['v' => 32, 'label' => '32 Tim', 'desc' => 'Round of 32 + 16 + Quarter + Semi + Final', 'rounds' => 5],
+                        ];
+                    @endphp
+                    @foreach($sizes as $sz)
+                        <label class="size-card">
+                            <input type="radio" name="bracket_size" value="{{ $sz['v'] }}" {{ $sz['v'] === 8 ? 'checked' : '' }} required>
+                            <div class="size-card-inner">
+                                <div class="size-num">{{ $sz['v'] }}</div>
+                                <div class="size-label">{{ $sz['label'] }}</div>
+                                <div class="size-desc">{{ $sz['desc'] }}</div>
+                                <div class="size-rounds">
+                                    @for($i = 0; $i < $sz['rounds']; $i++)
+                                        <span class="size-round-dot"></span>
+                                    @endfor
                                 </div>
                             </div>
-                        @endforeach
-                    </div>
-                    
-                    {{-- Selected Teams Preview --}}
-                    <div class="mt-3 p-3 bg-dark rounded" id="selectedTeamsPreview" style="display: none;">
-                        <h6 class="text-white mb-2">Tim Terpilih:</h6>
-                        <div id="selectedTeamsList" class="d-flex flex-wrap gap-2"></div>
-                    </div>
-                </div>
-
-                {{-- Action Buttons --}}
-                <div class="mt-4 d-flex justify-content-between">
-                    <a href="{{ route('admin.index') }}" class="btn btn-outline-light">
-                        <i class="bi bi-arrow-left mr-2"></i>Kembali
-                    </a>
-                    <button type="submit" class="btn btn-primary px-4" id="generateBtn" disabled>
-                        <i class="bi bi-diagram-3 mr-2"></i>Generate Bracket Preview
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Step 2: Bracket Preview & Drag-Drop --}}
-    <div class="card border-0 mb-4 d-none" id="previewSection" style="background: rgba(255,255,255,0.03); border-radius: 20px;">
-        <div class="card-header bg-transparent border-0 pt-4 px-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="text-white font-weight-bold mb-0">
-                    <span class="badge badge-primary mr-2">2</span>Arrange Bracket (Drag & Drop)
-                </h5>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-warning" id="shuffleBtn">
-                        <i class="bi bi-shuffle mr-1"></i>Random
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-info" id="resetBtn">
-                        <i class="bi bi-arrow-counterclockwise mr-1"></i>Reset
-                    </button>
+                        </label>
+                    @endforeach
                 </div>
             </div>
         </div>
-        <div class="card-body p-4">
-            {{-- Instructions --}}
-            <div class="alert alert-info border-0 mb-4" style="background: rgba(99, 102, 241, 0.1);">
-                <i class="bi bi-info-circle mr-2"></i>
-                <strong>Drag & Drop:</strong> Seret tim dari kiri ke slot bracket di kanan. 
-                Klik <strong>Random</strong> untuk acak otomatis, atau <strong>Reset</strong> untuk kembalikan ke awal.
-            </div>
 
-            <div class="row">
-                {{-- Available Teams (Draggable Source) --}}
-                <div class="col-md-3">
-                    <div class="card bg-dark border-secondary h-100">
-                        <div class="card-header bg-transparent border-secondary">
-                            <h6 class="text-white mb-0">
-                                <i class="bi bi-people mr-2"></i>Tim Tersedia
-                            </h6>
+        {{-- ===== Section 4: Pilih Tim ===== --}}
+        <div class="bb-section mb-4">
+            <div class="bb-section-header">
+                <div class="bb-section-icon"><i class="bi bi-people-fill"></i></div>
+                <div class="flex-grow-1">
+                    <h6 class="text-white font-weight-bold mb-0">Pilih Tim Peserta</h6>
+                    <small class="text-muted">Klik tim untuk memilih. Pilih tepat sejumlah ukuran bracket.</small>
+                </div>
+                <div class="bb-progress-pill" id="selectionInfo">
+                    <i class="bi bi-check2-circle mr-1"></i>
+                    <span id="countCurrent">0</span>/<span id="countTarget">8</span> tim
+                </div>
+            </div>
+            <div class="bb-section-body">
+                <div class="prodi-grid">
+                    @foreach($teams as $prodi => $prodiTeams)
+                        <div class="prodi-card-bb">
+                            <div class="prodi-head">
+                                <span class="prodi-name"><i class="bi bi-mortarboard mr-1"></i>{{ $prodi }}</span>
+                                <span class="prodi-count">{{ count($prodiTeams) }}</span>
+                            </div>
+                            <div class="prodi-body">
+                                @foreach($prodiTeams as $team)
+                                    <button type="button" class="team-pick"
+                                            data-team-id="{{ $team->id }}"
+                                            data-team-name="{{ $team->name }}"
+                                            onclick="toggleTeam(this)">
+                                        <span class="team-pick-avatar">{{ strtoupper(substr($team->name, 0, 1)) }}</span>
+                                        <span class="team-pick-name">{{ $team->name }}</span>
+                                        <i class="bi bi-check-circle-fill team-pick-check"></i>
+                                    </button>
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="card-body p-2" id="availableTeams">
-                            {{-- Teams akan di-populate via JS --}}
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
 
-                {{-- Bracket Visualization --}}
-                <div class="col-md-9">
-                    <div id="bracketContainer" class="bracket-container">
-                        {{-- Bracket akan di-generate via JS --}}
+                {{-- Selected preview --}}
+                <div class="selected-preview mt-4" id="selectedTeamsPreview" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="text-white mb-0"><i class="bi bi-list-check mr-1"></i>Tim Terpilih</h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearAllTeams()">
+                            <i class="bi bi-x-lg mr-1"></i>Hapus Semua
+                        </button>
                     </div>
+                    <div id="selectedTeamsList" class="selected-list"></div>
                 </div>
-            </div>
-
-            {{-- Save Button --}}
-            <div class="mt-4 text-center">
-                <button type="button" class="btn btn-success btn-lg px-5" id="saveBracketBtn">
-                    <i class="bi bi-check-lg mr-2"></i>Simpan Bracket
-                </button>
             </div>
         </div>
-    </div>
+
+        {{-- Hidden team_ids container --}}
+        <div id="teamIdsContainer"></div>
+
+        {{-- Sticky Footer --}}
+        <div class="bb-footer">
+            <a href="{{ route('admin.index') }}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left mr-2"></i>Kembali
+            </a>
+            <div class="bb-footer-status text-muted small d-none d-md-block">
+                <span id="footerStatus">Lengkapi konfigurasi & pilih tim</span>
+            </div>
+            <button type="submit" class="btn btn-primary px-4" id="generateBtn" disabled>
+                Lanjut Atur Bracket <i class="bi bi-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </form>
+
 </div>
-
-{{-- Hidden Form untuk Submit --}}
-<form id="saveBracketForm" action="{{ route('admin.tournament.bracket.store') }}" method="POST" class="d-none">
-    @csrf
-    <input type="hidden" name="tournament_name" id="formTournamentName">
-    <input type="hidden" name="sport_id" id="formSportId">
-    <input type="hidden" name="bracket_size" id="formBracketSize">
-    <input type="hidden" name="keterangan" id="formKeterangan">
-    <input type="hidden" name="arrangement" id="formArrangement">
-</form>
 @endsection
 
 @section('styles')
 <style>
-    {{-- Drag & Drop Styles --}}
-    .team-card {
-        cursor: grab;
-        transition: all 0.2s ease;
-        user-select: none;
+    /* ── Header + Stepper ── */
+    .bb-stepper { gap: 0; }
+    .bb-step {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 14px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 999px;
     }
-    
-    .team-card:hover {
+    .bb-step.active {
+        background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.12));
+        border-color: rgba(99,102,241,0.4);
+    }
+    .bb-step-num {
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.1);
+        color: #94a3b8;
+        font-size: 0.75rem; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .bb-step.active .bb-step-num {
+        background: #6366f1; color: #fff;
+        box-shadow: 0 0 0 4px rgba(99,102,241,0.2);
+    }
+    .bb-step-label { font-size: 0.78rem; color: #94a3b8; font-weight: 600; }
+    .bb-step.active .bb-step-label { color: #c7d2fe; }
+    .bb-step-line { width: 32px; height: 2px; background: rgba(255,255,255,0.1); margin: 0 8px; }
+
+    /* ── Section ── */
+    .bb-section {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .bb-section-header {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px;
+        background: rgba(255,255,255,0.02);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .bb-section-icon {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.18));
+        color: #c7d2fe;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+    .bb-section-body { padding: 20px 18px; }
+
+    /* ── Form input ── */
+    .bb-label {
+        display: block;
+        color: #cbd5e1;
+        font-weight: 600;
+        font-size: 0.82rem;
+        margin-bottom: 6px;
+    }
+    .bb-input {
+        width: 100%;
+        background: #0f1320;
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #e2e8f0;
+        padding: 9px 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.15s;
+    }
+    .bb-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        background: #131829;
+    }
+    .bb-input::placeholder { color: #475569; }
+
+    /* ── Sport grid (radio cards) ── */
+    .sport-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    .sport-card { margin: 0; cursor: pointer; }
+    .sport-card input { display: none; }
+    .sport-card-inner {
+        position: relative;
+        display: flex; flex-direction: column;
+        align-items: center; gap: 6px;
+        padding: 16px 10px;
+        background: #0f1320;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        transition: all 0.15s;
+    }
+    .sport-card-inner:hover {
+        border-color: rgba(99,102,241,0.5);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        box-shadow: 0 4px 12px rgba(99,102,241,0.2);
     }
-    
-    .team-card.dragging {
-        opacity: 0.5;
-        cursor: grabbing;
+    .sport-card input:checked ~ .sport-card-inner {
+        background: linear-gradient(135deg, rgba(99,102,241,0.22), rgba(168,85,247,0.15));
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
     }
-    
-    .team-card.selected {
-        border: 2px solid #6366f1 !important;
-        background: rgba(99, 102, 241, 0.2) !important;
+    .sport-icon { font-size: 1.6rem; color: #818cf8; }
+    .sport-name { color: #e2e8f0; font-weight: 600; font-size: 0.82rem; text-align: center; }
+    .sport-check {
+        position: absolute; top: 6px; right: 8px;
+        color: #10b981; font-size: 1rem;
+        opacity: 0; transition: opacity 0.15s;
+    }
+    .sport-card input:checked ~ .sport-card-inner .sport-check { opacity: 1; }
+
+    /* ── Bracket size cards ── */
+    .size-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+    }
+    .size-card { margin: 0; cursor: pointer; }
+    .size-card input { display: none; }
+    .size-card-inner {
+        padding: 16px;
+        background: #0f1320;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        text-align: center;
+        transition: all 0.15s;
+    }
+    .size-card-inner:hover {
+        border-color: rgba(99,102,241,0.5);
+        transform: translateY(-2px);
+    }
+    .size-card input:checked ~ .size-card-inner {
+        background: linear-gradient(135deg, rgba(99,102,241,0.22), rgba(168,85,247,0.15));
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+    }
+    .size-num {
+        font-size: 1.8rem; font-weight: 800;
+        background: linear-gradient(135deg, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+    }
+    .size-label { color: #e2e8f0; font-weight: 700; font-size: 0.85rem; margin-top: 4px; }
+    .size-desc { color: #64748b; font-size: 0.7rem; margin-top: 2px; line-height: 1.3; }
+    .size-rounds {
+        display: flex; justify-content: center; gap: 4px; margin-top: 8px;
+    }
+    .size-round-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: rgba(99,102,241,0.4);
+    }
+    .size-card input:checked ~ .size-card-inner .size-round-dot { background: #818cf8; }
+
+    /* ── Selection counter pill ── */
+    .bb-progress-pill {
+        background: #1e2540;
+        color: #a5b4fc;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .bb-progress-pill.complete {
+        background: rgba(16,185,129,0.15);
+        color: #34d399;
+        box-shadow: 0 0 0 2px rgba(16,185,129,0.3);
     }
 
-    {{-- Bracket Styles --}}
-    .bracket-container {
-        overflow-x: auto;
-        padding: 20px;
+    /* ── Prodi grid ── */
+    .prodi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
     }
-    
-    .bracket-round {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        margin-right: 40px;
-        min-width: 200px;
+    .prodi-card-bb {
+        background: #0f1320;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 10px;
+        overflow: hidden;
     }
-    
-    .bracket-round-title {
-        text-align: center;
-        color: #94a3b8;
-        font-size: 0.875rem;
-        font-weight: 600;
-        margin-bottom: 15px;
-        text-transform: uppercase;
+    .prodi-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
-    
-    .bracket-match {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+    .prodi-name { color: #cbd5e1; font-weight: 600; font-size: 0.82rem; }
+    .prodi-count {
+        background: rgba(99,102,241,0.15);
+        color: #a5b4fc;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    .prodi-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+    /* ── Team pick button ── */
+    .team-pick {
+        display: flex; align-items: center; gap: 8px;
+        background: #1a1f2e;
+        border: 1px solid rgba(255,255,255,0.06);
         border-radius: 8px;
-        margin-bottom: 20px;
+        padding: 7px 10px;
+        color: #e2e8f0;
+        font-weight: 600;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: left;
         position: relative;
     }
-    
-    .bracket-match::after {
-        content: '';
-        position: absolute;
-        right: -20px;
-        top: 50%;
-        width: 20px;
-        height: 2px;
-        background: rgba(255, 255, 255, 0.2);
+    .team-pick:hover {
+        border-color: rgba(99,102,241,0.55);
+        background: #1f2540;
+        transform: translateX(2px);
     }
-    
-    .bracket-match:last-child::after {
-        display: none;
+    .team-pick-avatar {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px;
+        background: linear-gradient(135deg, #475569, #64748b);
+        border-radius: 6px;
+        font-weight: 800;
+        font-size: 0.78rem;
+        flex-shrink: 0;
+        transition: all 0.15s;
     }
-    
-    .match-slot {
-        padding: 10px 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        min-height: 45px;
-        display: flex;
-        align-items: center;
-        transition: all 0.2s;
-    }
-    
-    .match-slot:last-child {
-        border-bottom: none;
-    }
-    
-    .match-slot.drag-over {
-        background: rgba(99, 102, 241, 0.3);
-        border: 2px dashed #6366f1;
-    }
-    
-    .match-slot.occupied {
-        background: rgba(16, 185, 129, 0.1);
-        border-left: 3px solid #10b981;
-    }
-    
-    .match-slot .team-name {
-        color: #f8fafc;
-        font-weight: 500;
-        font-size: 0.875rem;
-    }
-    
-    .match-slot .placeholder-text {
-        color: #64748b;
-        font-size: 0.75rem;
-        font-style: italic;
-    }
-    
-    .match-slot .remove-btn {
-        margin-left: auto;
+    .team-pick-name { flex: 1; }
+    .team-pick-check {
+        color: #10b981;
+        font-size: 1rem;
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: opacity 0.15s;
+    }
+    .team-pick.selected {
+        background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.12));
+        border-color: #6366f1;
+        box-shadow: 0 0 0 1px rgba(99,102,241,0.3);
+    }
+    .team-pick.selected .team-pick-avatar {
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        box-shadow: 0 2px 6px rgba(99,102,241,0.5);
+    }
+    .team-pick.selected .team-pick-check { opacity: 1; }
+
+    /* ── Selected preview ── */
+    .selected-preview {
+        background: rgba(16,185,129,0.05);
+        border: 1px solid rgba(16,185,129,0.2);
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+    .selected-list {
+        display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .selected-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: #fff;
+        padding: 5px 10px 5px 5px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(79,70,229,0.35);
+    }
+    .selected-chip .chip-avatar {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 20px; height: 20px;
+        background: rgba(255,255,255,0.25);
+        border-radius: 50%;
+        font-size: 0.7rem; font-weight: 800;
+    }
+    .selected-chip .chip-remove {
         cursor: pointer;
-        color: #ef4444;
+        opacity: 0.7;
+        font-size: 0.78rem;
+        margin-left: 4px;
+        transition: opacity 0.15s;
     }
-    
-    .match-slot:hover .remove-btn {
-        opacity: 1;
-    }
-    
-    {{-- Connector Lines --}}
-    .bracket-connector {
+    .selected-chip .chip-remove:hover { opacity: 1; }
+
+    /* ── Sticky footer ── */
+    .bb-footer {
+        position: sticky;
+        bottom: 0;
+        background: rgba(15,19,32,0.95);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid rgba(255,255,255,0.08);
+        padding: 12px 18px;
+        margin: 24px -18px -16px;
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-radius: 0 0 14px 14px;
+        z-index: 10;
     }
-    
-    .connector-line {
-        width: 20px;
-        height: 2px;
-        background: rgba(255, 255, 255, 0.2);
-    }
-    
-    .connector-join {
-        width: 2px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.2);
-    }
+
+    /* date input dark hint */
+    .bb-input::-webkit-calendar-picker-indicator { filter: invert(0.7); }
 </style>
 @endsection
 
 @section('scripts')
 <script>
 let selectedTeams = [];
-let currentArrangement = [];
 
-{{-- STEP 1: Team Selection --}}
-function toggleTeam(element) {
-    const teamId = element.dataset.teamId;
-    const teamName = element.dataset.teamName;
-    const badge = element.querySelector('.badge');
-    const bracketSize = parseInt(document.getElementById('bracketSize').value);
-    
-    if (element.classList.contains('selected')) {
-        {{-- Deselect --}}
-        element.classList.remove('selected');
-        badge.classList.remove('badge-primary');
-        badge.classList.add('badge-dark');
-        selectedTeams = selectedTeams.filter(t => t.id != teamId);
+function getBracketSize() {
+    const r = document.querySelector('input[name="bracket_size"]:checked');
+    return r ? parseInt(r.value) : 8;
+}
+
+function toggleTeam(btn) {
+    const id   = btn.dataset.teamId;
+    const name = btn.dataset.teamName;
+    const size = getBracketSize();
+
+    if (btn.classList.contains('selected')) {
+        btn.classList.remove('selected');
+        selectedTeams = selectedTeams.filter(t => t.id != id);
     } else {
-        {{-- Select --}}
-        if (selectedTeams.length >= bracketSize) {
+        if (selectedTeams.length >= size) {
             Swal.fire({
-                icon: 'warning',
-                title: 'Maksimum Tim',
-                text: `Anda hanya bisa memilih ${bracketSize} tim untuk bracket ini!`,
+                icon: 'warning', title: 'Maksimum Tim',
+                text: `Hanya bisa memilih ${size} tim. Hapus tim lain dulu.`,
                 confirmButtonColor: '#6366f1'
             });
             return;
         }
-        element.classList.add('selected');
-        badge.classList.remove('badge-dark');
-        badge.classList.add('badge-primary');
-        selectedTeams.push({ id: teamId, name: teamName });
+        btn.classList.add('selected');
+        selectedTeams.push({ id, name });
     }
-    
-    updateSelectionUI();
+    updateUI();
 }
 
-function updateSelectionUI() {
-    const bracketSize = parseInt(document.getElementById('bracketSize').value);
-    const count = selectedTeams.length;
-    
-    {{-- Update counter badge --}}
-    const infoBadge = document.getElementById('selectionInfo');
-    infoBadge.textContent = `${count} / ${bracketSize} tim dipilih`;
-    
-    if (count === bracketSize) {
-        infoBadge.classList.remove('badge-secondary');
-        infoBadge.classList.add('badge-success');
+function removeTeamById(id) {
+    selectedTeams = selectedTeams.filter(t => t.id != id);
+    const btn = document.querySelector(`.team-pick[data-team-id="${id}"]`);
+    if (btn) btn.classList.remove('selected');
+    updateUI();
+}
+
+function clearAllTeams() {
+    selectedTeams = [];
+    document.querySelectorAll('.team-pick.selected').forEach(b => b.classList.remove('selected'));
+    updateUI();
+}
+
+function updateUI() {
+    const size = getBracketSize();
+    const n = selectedTeams.length;
+
+    document.getElementById('countCurrent').textContent = n;
+    document.getElementById('countTarget').textContent  = size;
+
+    const pill = document.getElementById('selectionInfo');
+    pill.classList.toggle('complete', n === size);
+
+    /* Selected chips */
+    const wrap = document.getElementById('selectedTeamsPreview');
+    const list = document.getElementById('selectedTeamsList');
+    if (n > 0) {
+        wrap.style.display = 'block';
+        list.innerHTML = selectedTeams.map(t => `
+            <span class="selected-chip">
+                <span class="chip-avatar">${t.name.charAt(0).toUpperCase()}</span>
+                ${t.name}
+                <i class="bi bi-x-circle-fill chip-remove" onclick="removeTeamById('${t.id}')"></i>
+            </span>`).join('');
     } else {
-        infoBadge.classList.remove('badge-success');
-        infoBadge.classList.add('badge-secondary');
+        wrap.style.display = 'none';
     }
-    
-    {{-- Update selected teams preview --}}
-    const previewDiv = document.getElementById('selectedTeamsPreview');
-    const listDiv = document.getElementById('selectedTeamsList');
-    
-    if (count > 0) {
-        previewDiv.style.display = 'block';
-        listDiv.innerHTML = selectedTeams.map(t => `
-            <span class="badge badge-primary px-3 py-2">${t.name}</span>
-        `).join('');
-    } else {
-        previewDiv.style.display = 'none';
-    }
-    
-    {{-- Enable/disable generate button --}}
-    const generateBtn = document.getElementById('generateBtn');
-    generateBtn.disabled = count !== bracketSize;
-    if (count === bracketSize) {
-        generateBtn.classList.remove('btn-primary');
-        generateBtn.classList.add('btn-success');
-        generateBtn.innerHTML = '<i class="bi bi-check-lg mr-2"></i>Generate Bracket Preview';
-    } else {
-        generateBtn.classList.remove('btn-success');
-        generateBtn.classList.add('btn-primary');
-        generateBtn.innerHTML = '<i class="bi bi-diagram-3 mr-2"></i>Generate Bracket Preview';
-    }
+
+    /* Submit button + status */
+    const btn      = document.getElementById('generateBtn');
+    const status   = document.getElementById('footerStatus');
+    const sportOk  = !!document.querySelector('input[name="sport_id"]:checked');
+    const nameOk   = !!document.querySelector('input[name="tournament_name"]').value.trim();
+    const startOk  = !!document.getElementById('startDate').value;
+    const endOk    = !!document.getElementById('endDate').value;
+    const teamsOk  = n === size;
+
+    if (!nameOk)            status.textContent = 'Isi nama tournament dulu';
+    else if (!sportOk)      status.textContent = 'Pilih cabang olahraga';
+    else if (!startOk || !endOk) status.textContent = 'Lengkapi tanggal turnamen';
+    else if (!teamsOk)      status.textContent = `Pilih ${size - n} tim lagi`;
+    else                    status.textContent = '✓ Siap lanjut atur bracket';
+
+    btn.disabled = !(nameOk && sportOk && startOk && endOk && teamsOk);
 }
 
-{{-- Update counter when bracket size changes --}}
-document.getElementById('bracketSize').addEventListener('change', function() {
-    const newSize = parseInt(this.value);
-    const currentCount = selectedTeams.length;
-    
-    if (currentCount > newSize) {
-        Swal.fire({
-            icon: 'info',
-            title: 'Tim Berlebih',
-            text: `Anda sudah memilih ${currentCount} tim. Silakan kurangi menjadi ${newSize} tim.`,
-            confirmButtonColor: '#6366f1'
-        });
-    }
-    updateSelectionUI();
-});
-
-{{-- STEP 2: Generate Bracket with Auto-Fill --}}
-document.getElementById('bracketConfigForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const bracketSize = parseInt(document.getElementById('bracketSize').value);
-    
-    if (selectedTeams.length !== bracketSize) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Tim Belum Lengkap',
-            text: `Pilih tepat ${bracketSize} tim untuk melanjutkan!`,
-            confirmButtonColor: '#6366f1'
-        });
-        return;
-    }
-    
-    {{-- Show preview section --}}
-    document.getElementById('previewSection').classList.remove('d-none');
-    
-    {{-- Generate bracket with teams auto-filled --}}
-    generateBracketWithTeams();
-    
-    {{-- Scroll to preview --}}
-    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
-});
-
-function generateBracketWithTeams() {
-    const bracketSize = parseInt(document.getElementById('bracketSize').value);
-    const numRounds = Math.log2(bracketSize);
-    const container = document.getElementById('bracketContainer');
-    const availableTeamsDiv = document.getElementById('availableTeams');
-    
-    {{-- Initialize arrangement with selected teams --}}
-    currentArrangement = [];
-    for (let i = 0; i < bracketSize / 2; i++) {
-        currentArrangement[i] = [null, null];
-    }
-    
-    {{-- Populate available teams pool for drag source --}}
-    availableTeamsDiv.innerHTML = `
-        <div class="mb-2 small text-muted">Drag tim ke bracket:</div>
-        ${selectedTeams.map(team => `
-            <div class="team-card card bg-dark border-secondary mb-2" 
-                 draggable="true" 
-                 data-team-id="${team.id}"
-                 data-team-name="${team.name}">
-                <div class="card-body p-2">
-                    <div class="text-white font-weight-bold" style="font-size: 0.875rem;">${team.name}</div>
-                </div>
-            </div>
-        `).join('')}
-    `;
-    
-    {{-- Initialize drag for available teams --}}
-    document.querySelectorAll('#availableTeams .team-card').forEach(card => {
-        card.addEventListener('dragstart', function(e) {
-            e.dataTransfer.setData('teamId', this.dataset.teamId);
-            e.dataTransfer.setData('teamName', this.dataset.teamName);
-            this.classList.add('dragging');
-        });
-        
-        card.addEventListener('dragend', function() {
-            this.classList.remove('dragging');
-        });
-    });
-    
-    {{-- Generate bracket HTML --}}
-    let html = '<div class="d-flex">';
-    
-    for (let round = 1; round <= numRounds; round++) {
-        const numMatches = bracketSize / Math.pow(2, round);
-        const roundName = getRoundName(round, numRounds);
-        
-        html += `
-            <div class="bracket-round">
-                <div class="bracket-round-title">${roundName}</div>
-        `;
-        
-        for (let match = 0; match < numMatches; match++) {
-            const teamIndex = match * 2;
-            const teamA = selectedTeams[teamIndex];
-            const teamB = selectedTeams[teamIndex + 1];
-            
-            {{-- Fill Round 1 with selected teams --}}
-            if (round === 1 && teamA) {
-                currentArrangement[match][0] = teamA.id;
-            }
-            if (round === 1 && teamB) {
-                currentArrangement[match][1] = teamB.id;
-            }
-            
-            const slotAHasTeam = round === 1 && teamA;
-            const slotBHasTeam = round === 1 && teamB;
-            
-            html += `
-                <div class="bracket-match">
-                    <div class="match-slot ${slotAHasTeam ? 'occupied' : ''}" 
-                         data-round="${round}" 
-                         data-match="${match}"
-                         data-slot="a"
-                         ${round === 1 ? `data-arrangement-index="${match}"` : ''}
-                         ondrop="drop(event)" 
-                         ondragover="allowDrop(event)"
-                         ondragleave="leaveDrop(event)">
-                        ${slotAHasTeam ? `
-                            <span class="team-name">${teamA.name}</span>
-                            <i class="bi bi-x-circle remove-btn" onclick="removeTeam(this, '${match}', 'a')"></i>
-                        ` : '<span class="placeholder-text">Drop tim di sini</span>'}
-                    </div>
-                    <div class="match-slot ${slotBHasTeam ? 'occupied' : ''}" 
-                         data-round="${round}" 
-                         data-match="${match}"
-                         data-slot="b"
-                         ${round === 1 ? `data-arrangement-index="${match}"` : ''}
-                         ondrop="drop(event)" 
-                         ondragover="allowDrop(event)"
-                         ondragleave="leaveDrop(event)">
-                        ${slotBHasTeam ? `
-                            <span class="team-name">${teamB.name}</span>
-                            <i class="bi bi-x-circle remove-btn" onclick="removeTeam(this, '${match}', 'b')"></i>
-                        ` : '<span class="placeholder-text">Drop tim di sini</span>'}
-                    </div>
-                </div>
-            `;
-        }
-        
-        html += '</div>';
-    }
-    
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-function getRoundName(round, totalRounds) {
-    const diff = totalRounds - round;
-    const names = {
-        0: 'Final',
-        1: 'Semi Final',
-        2: 'Quarter Final',
-        3: 'Round of 16',
-        4: 'Round of 32'
-    };
-    return names[diff] || `Round ${round}`;
-}
-
-function allowDrop(ev) {
-    ev.preventDefault();
-    ev.currentTarget.classList.add('drag-over');
-}
-
-function leaveDrop(ev) {
-    ev.currentTarget.classList.remove('drag-over');
-}
-
-function drop(ev) {
-    ev.preventDefault();
-    ev.currentTarget.classList.remove('drag-over');
-    
-    const teamId = ev.dataTransfer.getData('teamId');
-    const teamName = ev.dataTransfer.getData('teamName');
-    const slot = ev.currentTarget;
-    const arrangementIndex = slot.dataset.arrangementIndex;
-    const slotPosition = slot.dataset.slot;
-    
-    {{-- Check if team already placed elsewhere in round 1 --}}
-    if (arrangementIndex !== undefined) {
-        const existingIndex = currentArrangement.findIndex(arr => arr && (arr[0] == teamId || arr[1] == teamId));
-        if (existingIndex !== -1) {
-            {{-- Remove from previous position --}}
-            if (currentArrangement[existingIndex][0] == teamId) {
-                currentArrangement[existingIndex][0] = null;
-            } else {
-                currentArrangement[existingIndex][1] = null;
-            }
-            
-            {{-- Update UI for previous slot --}}
-            const prevSlots = document.querySelectorAll(`[data-arrangement-index="${existingIndex}"]`);
-            prevSlots.forEach(s => {
-                if (s.dataset.slot === (currentArrangement[existingIndex][0] == teamId ? 'a' : 'b')) {
-                    clearSlot(s);
-                }
+/* Listeners */
+document.querySelectorAll('input[name="bracket_size"]').forEach(r => {
+    r.addEventListener('change', () => {
+        const size = getBracketSize();
+        if (selectedTeams.length > size) {
+            Swal.fire({
+                icon: 'info', title: 'Tim Berlebih',
+                text: `Bracket ${size} hanya butuh ${size} tim. Lebihan akan otomatis dihapus.`,
+                confirmButtonColor: '#6366f1'
+            });
+            selectedTeams = selectedTeams.slice(0, size);
+            document.querySelectorAll('.team-pick.selected').forEach((b, i) => {
+                if (i >= size) b.classList.remove('selected');
             });
         }
-        
-        {{-- Place in new position --}}
-        if (!currentArrangement[arrangementIndex]) {
-            currentArrangement[arrangementIndex] = [null, null];
-        }
-        currentArrangement[arrangementIndex][slotPosition === 'a' ? 0 : 1] = teamId;
-    }
-    
-    {{-- Update slot UI --}}
-    slot.classList.add('occupied');
-    slot.innerHTML = `
-        <span class="team-name">${teamName}</span>
-        <i class="bi bi-x-circle remove-btn" onclick="removeTeam(this, '${arrangementIndex}', '${slotPosition}')"></i>
-    `;
-}
-
-function clearSlot(slot) {
-    slot.classList.remove('occupied');
-    slot.innerHTML = '<span class="placeholder-text">Drop tim di sini</span>';
-}
-
-function removeTeam(btn, arrangementIndex, slotPosition) {
-    const slot = btn.closest('.match-slot');
-    
-    if (arrangementIndex !== 'undefined') {
-        currentArrangement[arrangementIndex][slotPosition === 'a' ? 0 : 1] = null;
-    }
-    
-    clearSlot(slot);
-}
-
-{{-- Shuffle Button --}}
-document.getElementById('shuffleBtn').addEventListener('click', function() {
-    const teamIds = selectedTeams.map(t => t.id);
-    
-    {{-- Fisher-Yates shuffle --}}
-    for (let i = teamIds.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
-    }
-    
-    {{-- Fill bracket with shuffled teams --}}
-    const slots = document.querySelectorAll('[data-arrangement-index]');
-    let teamIndex = 0;
-    
-    currentArrangement = currentArrangement.map(() => [null, null]);
-    
-    slots.forEach(slot => {
-        const index = parseInt(slot.dataset.arrangementIndex);
-        const position = slot.dataset.slot === 'a' ? 0 : 1;
-        
-        if (teamIndex < teamIds.length && currentArrangement[index]) {
-            const teamId = teamIds[teamIndex];
-            const team = selectedTeams.find(t => t.id == teamId);
-            
-            currentArrangement[index][position] = teamId;
-            
-            slot.classList.add('occupied');
-            slot.innerHTML = `
-                <span class="team-name">${team.name}</span>
-                <i class="bi bi-x-circle remove-btn" onclick="removeTeam(this, '${index}', '${slot.dataset.slot}')"></i>
-            `;
-            
-            teamIndex++;
-        }
+        updateUI();
     });
 });
 
-{{-- Reset Button --}}
-document.getElementById('resetBtn').addEventListener('click', function() {
-    const slots = document.querySelectorAll('[data-arrangement-index]');
-    slots.forEach(slot => clearSlot(slot));
-    currentArrangement = currentArrangement.map(() => [null, null]);
+document.querySelectorAll('input[name="sport_id"], input[name="tournament_name"], #startDate, #endDate')
+    .forEach(el => el.addEventListener('input', updateUI));
+
+/* Date validation: end >= start */
+document.getElementById('startDate').addEventListener('change', function() {
+    document.getElementById('endDate').min = this.value;
 });
 
-{{-- Save Bracket --}}
-document.getElementById('saveBracketBtn').addEventListener('click', function() {
-    {{-- Filter out empty arrangements --}}
-    const validArrangement = currentArrangement.filter(arr => arr && (arr[0] || arr[1]));
-    
-    if (validArrangement.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Bracket Kosong',
-            text: 'Isi minimal satu match untuk menyimpan bracket!',
-            confirmButtonColor: '#6366f1'
-        });
+/* Submit: inject team_ids hidden inputs */
+document.getElementById('bracketConfigForm').addEventListener('submit', function(e) {
+    const size = getBracketSize();
+    if (selectedTeams.length !== size) {
+        e.preventDefault();
+        Swal.fire({ icon: 'warning', title: 'Tim Belum Lengkap',
+            text: `Pilih tepat ${size} tim!`, confirmButtonColor: '#6366f1' });
         return;
     }
-    
-    {{-- Populate hidden form --}}
-    document.getElementById('formTournamentName').value = document.querySelector('input[name="tournament_name"]').value;
-    document.getElementById('formSportId').value = document.querySelector('select[name="sport_id"]').value;
-    document.getElementById('formBracketSize').value = document.querySelector('select[name="bracket_size"]').value;
-    document.getElementById('formKeterangan').value = document.querySelector('input[name="keterangan"]').value;
-    document.getElementById('formArrangement').value = JSON.stringify(currentArrangement);
-    
-    {{-- Submit form --}}
-    document.getElementById('saveBracketForm').submit();
+    const c = document.getElementById('teamIdsContainer');
+    c.innerHTML = '';
+    selectedTeams.forEach(t => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = 'team_ids[]';
+        inp.value = t.id;
+        c.appendChild(inp);
+    });
 });
+
+/* Init */
+updateUI();
 </script>
 @endsection

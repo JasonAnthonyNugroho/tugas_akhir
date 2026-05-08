@@ -35,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
     // Custom Bracket Builder Routes
     Route::get('/admin/bracket-builder', [CustomBracketController::class, 'builder'])->name('admin.tournament.bracket.builder');
     Route::post('/admin/bracket-builder/preview', [CustomBracketController::class, 'preview'])->name('admin.tournament.bracket.preview');
+    Route::post('/admin/bracket-builder/arrange', [CustomBracketController::class, 'showArrange'])->name('admin.tournament.bracket.arrange');
     Route::post('/admin/bracket-builder/store', [CustomBracketController::class, 'store'])->name('admin.tournament.bracket.store');
     Route::get('/admin/tournament/{tournament}/bracket', [CustomBracketController::class, 'viewBracket'])->name('admin.tournament.bracket.view');
     Route::post('/admin/tournament/{tournament}/arrangement', [CustomBracketController::class, 'updateArrangement'])->name('admin.tournament.bracket.arrangement');

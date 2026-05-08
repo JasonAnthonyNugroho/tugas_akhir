@@ -13,19 +13,25 @@
             <p class="text-muted mb-0">
                 <span class="badge badge-primary mr-2">{{ $tournament->sport->nama_sport }}</span>
                 <span class="badge badge-secondary">{{ $tournament->year }}</span>
+                @if($tournament->start_date && $tournament->end_date)
+                    <span class="badge badge-info ml-2">
+                        <i class="bi bi-calendar mr-1"></i>
+                        {{ \Carbon\Carbon::parse($tournament->start_date)->format('d M') }} - {{ \Carbon\Carbon::parse($tournament->end_date)->format('d M Y') }}
+                    </span>
+                @endif
             </p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.tournament.bracket.builder') }}" class="btn btn-outline-light">
                 <i class="bi bi-plus-lg mr-2"></i>Buat Baru
             </a>
-            <form action="{{ route('pertandingan.reroll-bracket', $tournament) }}" method="POST" class="d-inline">
+            <form action="{{ route('admin.bracket.reroll', $tournament) }}" method="POST" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-warning" onclick="return confirm('Acak ulang bracket? Tim akan di-random ulang.')">
                     <i class="bi bi-shuffle mr-2"></i>Reroll
                 </button>
             </form>
-            <form action="{{ route('pertandingan.delete-tournament', $tournament) }}" method="POST" class="d-inline">
+            <form action="{{ route('admin.tournament.delete', $tournament) }}" method="POST" class="d-inline">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Hapus tournament ini?')">
                     <i class="bi bi-trash mr-2"></i>Hapus
@@ -89,9 +95,17 @@
                                     <div class="bracket-match-card {{ $match->winner_id ? 'completed' : '' }} {{ $match->status === 'live' ? 'live' : '' }}"
                                          data-match-id="{{ $match->id }}">
                                         
-                                        {{-- Match Header --}}
+                                        {{-- Match Header dengan Tanggal --}}
                                         <div class="match-header">
                                             <small class="match-number">M{{ $match->match_number }}</small>
+                                            <div class="match-date">
+                                                @if($match->match_date)
+                                                    <i class="bi bi-clock mr-1"></i>
+                                                    {{ $match->match_date->format('d M, H:i') }}
+                                                @else
+                                                    <span class="text-muted">TBA</span>
+                                                @endif
+                                            </div>
                                             @if($match->status === 'live')
                                                 <span class="live-badge">LIVE</span>
                                             @elseif($match->status === 'finished')
@@ -258,9 +272,9 @@
                     <div class="col-md-3 col-lg-2 mb-3">
                         <div class="card bg-dark border-secondary">
                             <div class="card-body p-3 text-center">
-                                <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
-                                     style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #a855f7) !important;">
-                                    <i class="bi bi-shield text-white"></i>
+                                <div class="d-inline-flex align-items-center justify-content-center mb-2 text-white font-weight-bold"
+                                     style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 10px; font-size: 1rem;">
+                                    {{ strtoupper(substr($team->name, 0, 1)) }}
                                 </div>
                                 <div class="text-white font-weight-bold small">{{ $team->name }}</div>
                                 <div class="text-muted" style="font-size: 0.75rem;">{{ $team->prodi }}</div>
@@ -349,12 +363,26 @@
         padding: 6px 10px;
         background: rgba(255, 255, 255, 0.03);
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        gap: 8px;
     }
     
     .match-number {
         color: #64748b;
         font-size: 0.7rem;
         font-weight: 600;
+        flex-shrink: 0;
+    }
+    
+    .match-date {
+        color: #94a3b8;
+        font-size: 0.7rem;
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    .match-date i {
+        font-size: 0.65rem;
     }
     
     .live-badge {

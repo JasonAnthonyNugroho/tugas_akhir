@@ -364,6 +364,8 @@
             z-index: 1;
         }
     </style>
+
+    @yield('styles')
 </head>
 
 <body>

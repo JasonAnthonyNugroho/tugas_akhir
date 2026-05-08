@@ -54,9 +54,9 @@
                     <!-- Score Board -->
                     <div class="row align-items-center text-center mb-5">
                         <div class="col-md-5 mb-4 mb-md-0">
-                            <div class="team-emblem-placeholder mx-auto mb-3"
-                                style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 2px dashed var(--glass-border); display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-shield-shaded text-muted h1 mb-0"></i>
+                            <div class="team-emblem-placeholder mx-auto mb-3 d-flex align-items-center justify-content-center text-white font-weight-bold"
+                                style="width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 24px; font-size: 2rem;">
+                                {{ strtoupper(substr($pertandingan->teamA?->name ?? 'T', 0, 1)) }}
                             </div>
                             <h3 class="font-weight-bold text-white mb-1">{{ $pertandingan->teamA?->name ?? 'TBD' }}</h3>
                             <div class="badge badge-secondary px-3 py-1" style="border-radius: 8px; font-size: 0.7rem;">
@@ -74,9 +74,9 @@
                         </div>
 
                         <div class="col-md-5">
-                            <div class="team-emblem-placeholder mx-auto mb-3"
-                                style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 2px dashed var(--glass-border); display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-shield-fill text-muted h1 mb-0"></i>
+                            <div class="team-emblem-placeholder mx-auto mb-3 d-flex align-items-center justify-content-center text-white font-weight-bold"
+                                style="width: 80px; height: 80px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 24px; font-size: 2rem;">
+                                {{ strtoupper(substr($pertandingan->teamB?->name ?? 'T', 0, 1)) }}
                             </div>
                             <h3 class="font-weight-bold text-white mb-1">{{ $pertandingan->teamB?->name ?? 'TBD' }}</h3>
                             <div class="badge badge-secondary px-3 py-1" style="border-radius: 8px; font-size: 0.7rem;">

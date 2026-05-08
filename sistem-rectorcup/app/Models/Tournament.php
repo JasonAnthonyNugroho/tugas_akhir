@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tournament extends Model
 {
-    protected $fillable = ['name', 'type', 'is_active', 'sport_id', 'year'];
+    protected $fillable = ['name', 'type', 'is_active', 'sport_id', 'year', 'start_date', 'end_date', 'external_score_url'];
 
     public function sport()
     {

@@ -26,11 +26,13 @@ class Pertandingan extends Model
         'match_number',
         'next_match_id',
         'winner_id',
+        'match_date',
     ];
 
     protected $casts = [
         'waktu_tanding' => 'datetime',
         'selesai_pada' => 'datetime',
+        'match_date' => 'datetime',
     ];
 
     /**

@@ -436,14 +436,21 @@ class PertandinganController extends Controller
             'team_ids' => 'nullable|array',
             'manual_team_count' => 'nullable|integer|in:4,8,16',
             'keterangan' => 'nullable|string|max:255',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
         return DB::transaction(function () use ($request) {
+            $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now();
+            $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->addDays(7);
+            
             $tournament = Tournament::create([
                 'name' => $request->tournament_name,
                 'sport_id' => $request->sport_id,
                 'type' => 'single_elimination',
                 'year' => date('Y'),
+                'start_date' => $startDate,
+                'end_date' => $endDate,
             ]);
 
             $teamIds = $request->team_ids ?? [];
@@ -469,11 +476,17 @@ class PertandinganController extends Controller
             // Tapi lebih mudah buat per babak dan simpan ref-nya.
 
             $roundMatches = [];
+            $totalDays = $endDate->diffInDays($startDate);
+            $daysPerRound = $totalDays / ($numRounds + 1);
 
             // 1. Buat struktur match kosong untuk setiap babak
             for ($r = $numRounds; $r >= 1; $r--) {
                 $numMatchesInRound = pow(2, $numRounds - $r);
                 $roundMatches[$r] = [];
+                
+                // Hitung tanggal untuk round ini (Round 1 paling awal)
+                $roundDayOffset = ($numRounds - $r + 1) * $daysPerRound;
+                $roundDate = $startDate->copy()->addDays($roundDayOffset);
 
                 for ($m = 1; $m <= $numMatchesInRound; $m++) {
                     $nextMatch = null;
@@ -483,6 +496,10 @@ class PertandinganController extends Controller
                     }
 
                     $babakName = $this->getBabakName($r, $numRounds);
+                    
+                    // Tambahkan offset jam untuk setiap match
+                    $matchHour = 9 + (($m - 1) % 3) * 4; // 9:00, 13:00, 17:00
+                    $matchDateTime = $roundDate->copy()->setTime($matchHour, 0);
 
                     $match = Pertandingan::create([
                         'sport_id' => $request->sport_id,
@@ -492,7 +509,8 @@ class PertandinganController extends Controller
                         'next_match_id' => $nextMatch ? $nextMatch->id : null,
                         'status' => 'scheduled',
                         'babak' => $babakName,
-                        'waktu_tanding' => now()->addDays($r), // Placeholder waktu
+                        'waktu_tanding' => $matchDateTime,
+                        'match_date' => $matchDateTime,
                         'lokasi' => 'TBA',
                         'keterangan' => $request->keterangan,
                     ]);
@@ -503,6 +521,7 @@ class PertandinganController extends Controller
 
             // 1.5. Buat Perebutan Juara 3 (Bronze Match) jika ada minimal 4 tim (Semi Final)
             if ($numRounds >= 2) {
+                $bronzeDate = $startDate->copy()->addDays($totalDays - 1)->setTime(14, 0);
                 Pertandingan::create([
                     'sport_id' => $request->sport_id,
                     'tournament_id' => $tournament->id,
@@ -510,7 +529,8 @@ class PertandinganController extends Controller
                     'match_number' => 99, // Special number for 3rd place match
                     'status' => 'scheduled',
                     'babak' => 'Perebutan Juara 3',
-                    'waktu_tanding' => now()->addDays($numRounds),
+                    'waktu_tanding' => $bronzeDate,
+                    'match_date' => $bronzeDate,
                     'lokasi' => 'TBA',
                     'keterangan' => $request->keterangan,
                 ]);

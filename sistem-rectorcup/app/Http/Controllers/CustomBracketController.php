@@ -61,26 +61,67 @@ class CustomBracketController extends Controller
     }
 
     /**
+     * Tampilkan halaman arrange bracket (drag & drop) - page terpisah
+     */
+    public function showArrange(Request $request)
+    {
+        $request->validate([
+            'tournament_name'    => 'required|string|max:255',
+            'sport_id'           => 'required|exists:sports,id',
+            'bracket_size'       => 'required|integer|in:4,8,16,32',
+            'team_ids'           => 'required|array|min:2',
+            'team_ids.*'         => 'exists:teams,id',
+            'start_date'         => 'required|date',
+            'end_date'           => 'required|date|after_or_equal:start_date',
+            'external_score_url' => 'nullable|url|max:500',
+        ]);
+
+        $sport        = Sport::find($request->sport_id);
+        $selectedTeams = Team::whereIn('id', $request->team_ids)
+            ->orderByRaw('FIELD(id, ' . implode(',', $request->team_ids) . ')')
+            ->get();
+
+        return view('admin.bracket-arrange', [
+            'tournamentName'   => $request->tournament_name,
+            'sportId'          => $request->sport_id,
+            'bracketSize'      => (int) $request->bracket_size,
+            'keterangan'       => $request->keterangan,
+            'startDate'        => $request->start_date,
+            'endDate'          => $request->end_date,
+            'externalScoreUrl' => $request->external_score_url,
+            'sport'            => $sport,
+            'selectedTeams'    => $selectedTeams,
+            'teamIds'          => $request->team_ids,
+        ]);
+    }
+
+    /**
      * Save custom bracket dengan arrangement dari drag-drop
      */
     public function store(Request $request)
     {
         $request->validate([
-            'tournament_name' => 'required|string|max:255',
-            'sport_id' => 'required|exists:sports,id',
-            'arrangement' => 'required|array', // Format: [match_index => [team_a_id, team_b_id]]
-            'bracket_size' => 'required|integer|in:4,8,16,32',
-            'keterangan' => 'nullable|string|max:500',
+            'tournament_name'    => 'required|string|max:255',
+            'sport_id'           => 'required|exists:sports,id',
+            'arrangement'        => 'required|array', // Format: [match_index => [team_a_id, team_b_id]]
+            'bracket_size'       => 'required|integer|in:4,8,16,32',
+            'keterangan'         => 'nullable|string|max:500',
+            'start_date'         => 'required|date',
+            'end_date'           => 'required|date|after_or_equal:start_date',
+            'external_score_url' => 'nullable|url|max:500',
         ]);
 
         return DB::transaction(function () use ($request) {
             // Buat tournament
             $tournament = Tournament::create([
-                'name' => $request->tournament_name,
-                'sport_id' => $request->sport_id,
-                'type' => 'single_elimination',
-                'is_active' => true,
-                'year' => date('Y'),
+                'name'               => $request->tournament_name,
+                'sport_id'           => $request->sport_id,
+                'type'               => 'single_elimination',
+                'is_active'          => true,
+                'year'               => date('Y'),
+                'start_date'         => $request->start_date,
+                'end_date'           => $request->end_date,
+                'external_score_url' => $request->external_score_url,
             ]);
 
             // Attach teams ke tournament
@@ -223,16 +264,28 @@ class CustomBracketController extends Controller
     }
 
     /**
-     * Create actual matches di database
+     * Create actual matches di database dengan distribusi tanggal
      */
     private function createBracketMatches($tournament, $sportId, $bracketSize, $numRounds, $arrangement, $keterangan)
     {
         $roundMatches = [];
+        
+        // Parse tanggal tournament
+        $startDate = \Carbon\Carbon::parse($tournament->start_date);
+        $endDate = \Carbon\Carbon::parse($tournament->end_date);
+        $totalDays = $endDate->diffInDays($startDate);
+        
+        // Distribusi: Round 1 di awal, Final di akhir
+        $daysPerRound = $totalDays / ($numRounds + 1);
 
         // Buat matches dari Final ke Round 1
         for ($round = $numRounds; $round >= 1; $round--) {
             $numMatches = $bracketSize / pow(2, $round);
             $roundMatches[$round] = [];
+            
+            // Hitung tanggal untuk round ini (Round 1 paling awal)
+            $roundDayOffset = ($numRounds - $round + 1) * $daysPerRound;
+            $roundDate = $startDate->copy()->addDays($roundDayOffset);
 
             for ($matchNum = 1; $matchNum <= $numMatches; $matchNum++) {
                 $nextMatch = null;
@@ -240,6 +293,10 @@ class CustomBracketController extends Controller
                     $parentMatchIndex = ceil($matchNum / 2) - 1;
                     $nextMatch = $roundMatches[$round + 1][$parentMatchIndex] ?? null;
                 }
+                
+                // Tambahkan offset jam untuk setiap match (misal match 1 jam 9, match 2 jam 13, dll)
+                $matchHour = 9 + (($matchNum - 1) % 3) * 4; // 9:00, 13:00, 17:00
+                $matchDateTime = $roundDate->copy()->setTime($matchHour, 0);
 
                 $match = Pertandingan::create([
                     'sport_id' => $sportId,
@@ -249,7 +306,8 @@ class CustomBracketController extends Controller
                     'next_match_id' => $nextMatch ? $nextMatch->id : null,
                     'status' => 'scheduled',
                     'babak' => $this->getBabakName($round, $numRounds),
-                    'waktu_tanding' => now()->addDays($round),
+                    'waktu_tanding' => $matchDateTime,
+                    'match_date' => $matchDateTime,
                     'lokasi' => 'TBA',
                     'keterangan' => $keterangan,
                 ]);

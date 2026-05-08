@@ -139,50 +139,74 @@
                     $juara3 = $thirdPlace && $thirdPlace->winner_id ? $thirdPlace->winner : null;
                 @endphp
 
-                @if($juara1 || $juara2 || $juara3)
+                {{-- Sheet eksternal: cabang dengan poin manual (Catur, PUBG, dll) --}}
+                @if(!empty($selectedTournament->external_score_url))
+                    <div class="row justify-content-center mb-5">
+                        <div class="col-12 col-md-8 col-lg-6">
+                            <h5 class="text-center text-muted small font-weight-bold text-uppercase tracking-widest mb-3">
+                                <i class="bi bi-trophy-fill mr-2 text-warning"></i>Pemenang
+                            </h5>
+                            <a href="{{ $selectedTournament->external_score_url }}" target="_blank" rel="noopener noreferrer"
+                               class="external-score-card d-flex align-items-center text-decoration-none">
+                                <div class="external-score-icon">
+                                    <i class="bi bi-table"></i>
+                                </div>
+                                <div class="flex-grow-1 text-left">
+                                    <div class="external-score-title">Lihat Hasil &amp; Skor di Spreadsheet</div>
+                                    <div class="external-score-sub">
+                                        Cabang ini menggunakan sistem poin manual.
+                                        Klik untuk membuka sheet resmi panitia.
+                                    </div>
+                                </div>
+                                <i class="bi bi-box-arrow-up-right external-score-arrow"></i>
+                            </a>
+                        </div>
+                    </div>
+                @elseif($juara1 || $juara2 || $juara3)
                     <div class="row justify-content-center mb-5">
                         <div class="col-12 mb-4">
-                            <h5 class="text-center text-muted small font-weight-bold text-uppercase tracking-widest mb-4">Podium Pemenang</h5>
-                            <div class="d-flex justify-content-center align-items-end">
-                                {{-- Juara 2 --}}
-                                @if($juara2)
-                                    <div class="text-center mx-3 mb-2">
-                                        <div class="team-avatar mb-3 mx-auto d-flex align-items-center justify-content-center" 
-                                            style="width: 60px; height: 60px; background: rgba(255,255,255,0.05); border-radius: 50%; border: 2px solid #94a3b8;">
-                                            <i class="bi bi-shield-shaded h4 mb-0 text-muted"></i>
+                            <h5 class="text-center text-muted small font-weight-bold text-uppercase tracking-widest mb-4">
+                                <i class="bi bi-trophy-fill mr-2 text-warning"></i>Pemenang
+                            </h5>
+                            <div class="podium-row">
+                                {{-- Juara 1 --}}
+                                @if($juara1)
+                                    <div class="podium-item podium-1">
+                                        <div class="podium-medal podium-medal-gold">
+                                            <i class="bi bi-1-circle-fill"></i>
                                         </div>
-                                        <div class="p-3 rounded-top bg-secondary" style="min-width: 120px; height: 80px; opacity: 0.8;">
-                                            <div class="h5 font-weight-bold text-white mb-0">2nd</div>
-                                            <div class="small text-white-50 text-truncate" style="max-width: 100px;">{{ $juara2->name }}</div>
+                                        <div class="podium-team-name">{{ $juara1->name }}</div>
+                                        <div class="podium-block podium-block-gold">
+                                            <span class="podium-rank">1<sup>st</sup></span>
+                                            <span class="podium-label">Juara</span>
                                         </div>
                                     </div>
                                 @endif
 
-                                {{-- Juara 1 --}}
-                                @if($juara1)
-                                    <div class="text-center mx-3">
-                                        <i class="bi bi-crown-fill text-warning h3 mb-2 d-block"></i>
-                                        <div class="team-avatar mb-3 mx-auto d-flex align-items-center justify-content-center" 
-                                            style="width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; border: 3px solid #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);">
-                                            <i class="bi bi-shield-fill h3 mb-0 text-warning"></i>
+                                {{-- Juara 2 --}}
+                                @if($juara2)
+                                    <div class="podium-item podium-2">
+                                        <div class="podium-medal podium-medal-silver">
+                                            <i class="bi bi-2-circle-fill"></i>
                                         </div>
-                                        <div class="p-3 rounded-top bg-warning" style="min-width: 140px; height: 110px;">
-                                            <div class="h4 font-weight-bold text-dark mb-0">1st</div>
-                                            <div class="small font-weight-bold text-dark text-truncate" style="max-width: 120px;">{{ $juara1->name }}</div>
+                                        <div class="podium-team-name">{{ $juara2->name }}</div>
+                                        <div class="podium-block podium-block-silver">
+                                            <span class="podium-rank">2<sup>nd</sup></span>
+                                            <span class="podium-label">Runner-up</span>
                                         </div>
                                     </div>
                                 @endif
 
                                 {{-- Juara 3 --}}
                                 @if($juara3)
-                                    <div class="text-center mx-3 mb-2">
-                                        <div class="team-avatar mb-3 mx-auto d-flex align-items-center justify-content-center" 
-                                            style="width: 60px; height: 60px; background: rgba(255,255,255,0.05); border-radius: 50%; border: 2px solid #b45309;">
-                                            <i class="bi bi-shield-shaded h4 mb-0 text-muted"></i>
+                                    <div class="podium-item podium-3">
+                                        <div class="podium-medal podium-medal-bronze">
+                                            <i class="bi bi-3-circle-fill"></i>
                                         </div>
-                                        <div class="p-3 rounded-top" style="min-width: 120px; height: 60px; background: #b45309; opacity: 0.8;">
-                                            <div class="h5 font-weight-bold text-white mb-0">3rd</div>
-                                            <div class="small text-white-50 text-truncate" style="max-width: 100px;">{{ $juara3->name }}</div>
+                                        <div class="podium-team-name">{{ $juara3->name }}</div>
+                                        <div class="podium-block podium-block-bronze">
+                                            <span class="podium-rank">3<sup>rd</sup></span>
+                                            <span class="podium-label">Juara 3</span>
                                         </div>
                                     </div>
                                 @endif
@@ -192,8 +216,8 @@
                 @endif
 
                 {{-- Bracket View --}}
-                <div class="bracket-wrapper overflow-auto pb-4">
-                    <div class="d-flex" style="min-width: max-content;">
+                <div class="bracket-wrapper bracket-history-wrap overflow-auto pb-4">
+                    <div class="d-flex bracket-rounds-flex" style="min-width: max-content;">
                         @php
                             $maxRound = $selectedTournament->pertandingans->max('round');
                         @endphp
@@ -201,12 +225,15 @@
                         @for($r = 1; $r <= $maxRound; $r++)
                             @php
                                 $roundMatches = $selectedTournament->pertandingans->where('round', $r)->where('match_number', '!=', 99)->sortBy('match_number');
+                                $roundClasses = 'bracket-round';
+                                if ($r === 1)         $roundClasses .= ' bracket-round-first';
+                                if ($r === $maxRound) $roundClasses .= ' bracket-round-final';
                             @endphp
-                            <div class="bracket-round mr-5" style="width: 280px;">
-                                <h5 class="text-center text-muted small font-weight-bold text-uppercase mb-4">
+                            <div class="{{ $roundClasses }} mr-5" style="width: 280px;">
+                                <h5 class="text-center text-muted small font-weight-bold text-uppercase mb-4 bracket-round-title-h">
                                     {{ $roundMatches->first()->babak ?? 'Babak ' . $r }}
                                 </h5>
-                                <div class="d-flex flex-column justify-content-around h-100">
+                                <div class="match-list d-flex flex-column justify-content-around h-100">
                                     @foreach($roundMatches as $match)
                                         @php
                                             $labelParts = $match->custom_label ? preg_split('/\s+VS\s+/i', $match->custom_label) : null;
@@ -261,11 +288,11 @@
                                 $thirdLeft = $thirdPlaceMatch->teamA?->name ?? ($thirdLabelParts[0] ?? 'TBD');
                                 $thirdRight = $thirdPlaceMatch->teamB?->name ?? ($thirdLabelParts[1] ?? 'TBD');
                             @endphp
-                            <div class="bracket-round mr-5" style="width: 280px;">
-                                <h5 class="text-center text-muted small font-weight-bold text-uppercase mb-4">
-                                    {{ $thirdPlaceMatch->babak }}
+                            <div class="bracket-round bracket-round-third mr-5" style="width: 280px;">
+                                <h5 class="text-center text-muted small font-weight-bold text-uppercase mb-4 bracket-round-title-h bracket-round-title-third">
+                                    <i class="bi bi-award-fill mr-1"></i>{{ $thirdPlaceMatch->babak }}
                                 </h5>
-                                <div class="d-flex flex-column justify-content-center h-100">
+                                <div class="match-list d-flex flex-column justify-content-center h-100">
                                     <a href="{{ route('pertandingan.show', $thirdPlaceMatch->id) }}" class="bracket-match-link text-decoration-none">
                                         <div class="bracket-match mb-4 p-3 rounded"
                                             style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); position: relative; transition: all 0.3s ease;">
@@ -433,4 +460,320 @@
             </div>
         @endif
     @endif
+@endsection
+
+@section('styles')
+<style>
+    /* ── Podium row ── */
+    .podium-row {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 18px;
+        flex-wrap: wrap;
+        padding: 0 12px;
+    }
+
+    .podium-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-width: 140px;
+    }
+
+    /* Medal numbered circle di atas */
+    .podium-medal {
+        font-size: 3rem;
+        line-height: 1;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+        transition: transform 0.2s;
+    }
+    .podium-item:hover .podium-medal { transform: scale(1.08) rotate(-3deg); }
+
+    .podium-medal-gold {
+        color: #fbbf24;
+        filter: drop-shadow(0 0 16px rgba(251,191,36,0.55)) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+    .podium-medal-silver {
+        color: #cbd5e1;
+        filter: drop-shadow(0 0 12px rgba(203,213,225,0.4)) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+    .podium-medal-bronze {
+        color: #d97706;
+        filter: drop-shadow(0 0 12px rgba(217,119,6,0.4)) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+
+    /* Nama tim */
+    .podium-team-name {
+        color: #f1f5f9;
+        font-weight: 700;
+        font-size: 0.92rem;
+        margin-bottom: 12px;
+        max-width: 160px;
+        line-height: 1.25;
+    }
+
+    /* Block podium (kotak rank) */
+    .podium-block {
+        position: relative;
+        width: 140px;
+        border-radius: 12px 12px 0 0;
+        padding: 14px 10px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        box-shadow: 0 -4px 14px rgba(0,0,0,0.25);
+    }
+    .podium-block::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent 50%);
+        pointer-events: none;
+    }
+    .podium-rank {
+        font-size: 1.7rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+    .podium-rank sup { font-size: 0.55em; font-weight: 800; opacity: 0.85; }
+    .podium-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 2px;
+        opacity: 0.85;
+    }
+
+    /* Tinggi & warna per rank: 1 paling tinggi */
+    .podium-block-gold {
+        height: 130px;
+        background: linear-gradient(180deg, #fbbf24, #d97706);
+        color: #1a1300;
+    }
+    .podium-block-silver {
+        height: 100px;
+        background: linear-gradient(180deg, #e2e8f0, #94a3b8);
+        color: #1a1f2e;
+    }
+    .podium-block-bronze {
+        height: 75px;
+        background: linear-gradient(180deg, #d97706, #92400e);
+        color: #1a0f00;
+    }
+
+    /* Item juara 1 sedikit lebih besar untuk emphasis */
+    .podium-1 .podium-medal { font-size: 3.6rem; }
+    .podium-1 .podium-team-name { font-size: 1rem; }
+
+    /* Mobile stack */
+    @media (max-width: 575px) {
+        .podium-row { gap: 12px; }
+        .podium-item { min-width: 110px; }
+        .podium-block { width: 110px; }
+        .podium-medal { font-size: 2.4rem; }
+        .podium-1 .podium-medal { font-size: 2.8rem; }
+    }
+
+    /* ── External score sheet card (cabang manual: Catur, PUBG, dll) ── */
+    .external-score-card {
+        gap: 16px;
+        padding: 18px 20px;
+        background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(59,130,246,0.08));
+        border: 1px solid rgba(16,185,129,0.3);
+        border-radius: 14px;
+        color: #f1f5f9;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(16,185,129,0.1);
+    }
+    .external-score-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(16,185,129,0.55);
+        box-shadow: 0 6px 22px rgba(16,185,129,0.25);
+        color: #fff;
+        text-decoration: none;
+    }
+    .external-score-icon {
+        width: 56px; height: 56px;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff;
+        border-radius: 12px;
+        font-size: 1.6rem;
+        box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+    }
+    .external-score-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #f1f5f9;
+        margin-bottom: 2px;
+    }
+    .external-score-sub {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        line-height: 1.4;
+    }
+    .external-score-arrow {
+        flex-shrink: 0;
+        font-size: 1.2rem;
+        color: #34d399;
+        opacity: 0.7;
+        transition: all 0.2s;
+    }
+    .external-score-card:hover .external-score-arrow {
+        opacity: 1;
+        transform: translate(2px, -2px);
+    }
+
+    /* ─────────── BRACKET HISTORY (Liquipedia style) ─────────── */
+    .bracket-history-wrap {
+        padding: 8px 4px 24px;
+    }
+
+    /* Round title sebagai pill */
+    .bracket-history-wrap .bracket-round-title-h {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.12));
+        border: 1px solid rgba(99,102,241,0.3);
+        color: #c7d2fe !important;
+        padding: 7px 14px;
+        border-radius: 999px;
+        letter-spacing: 0.1em;
+        margin-bottom: 18px !important;
+        box-shadow: 0 2px 8px rgba(99,102,241,0.15);
+        align-self: center;
+    }
+    .bracket-history-wrap .bracket-round-title-third {
+        background: linear-gradient(135deg, rgba(217,119,6,0.2), rgba(120,53,15,0.15));
+        border-color: rgba(217,119,6,0.4);
+        color: #fbbf24 !important;
+    }
+
+    /* Round container */
+    .bracket-history-wrap .bracket-round {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+    /* Match list = full height kolom, override bootstrap justify-around dengan flex:1 child */
+    .bracket-history-wrap .match-list {
+        position: relative;
+        flex: 1;
+        justify-content: stretch !important;
+    }
+
+    /* Setiap match-link mengambil tinggi yang sama (flex 1) */
+    .bracket-history-wrap .bracket-match-link {
+        position: relative;
+        display: flex !important;
+        flex: 1 1 0;
+        align-items: center;
+        margin-bottom: 0 !important;
+    }
+    /* Match content tetap natural size, di-center di link wrapper */
+    .bracket-history-wrap .bracket-match {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        margin-bottom: 0 !important;
+    }
+    .bracket-history-wrap .bracket-match:hover {
+        border-color: rgba(99,102,241,0.5) !important;
+        box-shadow: 0 4px 14px rgba(99,102,241,0.2);
+        transform: translateY(-1px);
+    }
+
+    /* ── Connector lines ── */
+    /* Variabel warna */
+    .bracket-history-wrap { --bk-line: rgba(99,102,241,0.45); --bk-line-win: rgba(16,185,129,0.6); }
+
+    /* Garis masuk dari kiri (semua round kecuali round-first dan kolom juara 3) */
+    .bracket-history-wrap .bracket-round:not(.bracket-round-first):not(.bracket-round-third) .bracket-match-link::before {
+        content: "";
+        position: absolute;
+        left: -3rem;
+        top: 50%;
+        width: 3rem;
+        height: 2px;
+        background: var(--bk-line);
+        z-index: 1;
+    }
+
+    /* L-shape keluar ke kanan: pakai border pada area dari midpoint match → edge link wrapper.
+       Karena setiap link tinggi sama (flex 1), edge link = midpoint pasangan match. */
+    .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .bracket-match-link::after {
+        content: "";
+        position: absolute;
+        right: -3rem;
+        width: 3rem;
+        background: transparent;
+        z-index: 1;
+    }
+    /* Match ganjil (top of pair): horizontal kanan dari midpoint, lalu turun ke bottom edge (= merge point) */
+    .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .match-list > .bracket-match-link:nth-child(odd)::after {
+        top: 50%;
+        bottom: 0;
+        border-top: 2px solid var(--bk-line);
+        border-right: 2px solid var(--bk-line);
+        border-top-right-radius: 8px;
+    }
+    /* Match genap (bottom of pair): horizontal kanan dari midpoint, lalu naik ke top edge (= merge point) */
+    .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .match-list > .bracket-match-link:nth-child(even)::after {
+        top: 0;
+        bottom: 50%;
+        border-bottom: 2px solid var(--bk-line);
+        border-right: 2px solid var(--bk-line);
+        border-bottom-right-radius: 8px;
+    }
+
+    /* Highlight kalau match punya pemenang (winner) */
+    .bracket-history-wrap .bracket-match-link:has(.text-primary)::before {
+        background: var(--bk-line-win);
+        height: 3px;
+    }
+    .bracket-history-wrap .match-list > .bracket-match-link:has(.text-primary):nth-child(odd)::after {
+        border-top-color: var(--bk-line-win);
+        border-right-color: var(--bk-line-win);
+        border-top-width: 3px;
+        border-right-width: 3px;
+    }
+    .bracket-history-wrap .match-list > .bracket-match-link:has(.text-primary):nth-child(even)::after {
+        border-bottom-color: var(--bk-line-win);
+        border-right-color: var(--bk-line-win);
+        border-bottom-width: 3px;
+        border-right-width: 3px;
+    }
+
+    /* Pemisah visual: kolom Perebutan Juara 3 di luar bracket utama */
+    .bracket-history-wrap .bracket-round-third {
+        margin-left: 2.5rem !important;
+        padding-left: 1.5rem;
+        border-left: 1px dashed rgba(255,255,255,0.1);
+        position: relative;
+    }
+    .bracket-history-wrap .bracket-round-third::before {
+        content: "Bonus Match";
+        position: absolute;
+        left: 1.5rem;
+        top: -8px;
+        background: rgba(217,119,6,0.15);
+        color: #fbbf24;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        padding: 2px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+</style>
 @endsection

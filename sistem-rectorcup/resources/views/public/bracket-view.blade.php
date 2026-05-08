@@ -21,6 +21,12 @@
                 <p class="text-muted mb-0">
                     <span class="badge badge-primary mr-2">{{ $tournament->sport->nama_sport }}</span>
                     <span class="badge badge-secondary">{{ $tournament->year }}</span>
+                    @if($tournament->start_date && $tournament->end_date)
+                        <span class="badge badge-info ml-2">
+                            <i class="bi bi-calendar mr-1"></i>
+                            {{ \Carbon\Carbon::parse($tournament->start_date)->format('d M') }} - {{ \Carbon\Carbon::parse($tournament->end_date)->format('d M Y') }}
+                        </span>
+                    @endif
                 </p>
             </div>
         </div>
@@ -74,9 +80,9 @@
                 @foreach($tournament->teams as $team)
                     <div class="col-6 col-md-4 col-lg-3 col-xl-2 mb-2">
                         <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mr-2"
-                                 style="width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7) !important;">
-                                <i class="bi bi-shield text-white small"></i>
+                            <div class="d-flex align-items-center justify-content-center mr-2 text-white font-weight-bold"
+                                 style="width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; font-size: 0.85rem;">
+                                {{ strtoupper(substr($team->name, 0, 1)) }}
                             </div>
                             <div class="text-white font-weight-bold small text-truncate">{{ $team->name }}</div>
                         </div>
@@ -106,15 +112,23 @@
                                 @foreach($matches->sortBy('match_number') as $match)
                                     <div class="card border-0" style="background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden;
                                             @if($match->status === 'live') border: 1px solid #ef4444 !important; @endif">
-                                        {{-- Header --}}
-                                        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background: rgba(255,255,255,0.03);">
-                                            <small class="text-muted" style="font-size: 0.7rem;">M{{ $match->match_number }}</small>
+                                        {{-- Header dengan Tanggal --}}
+                                        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background: rgba(255,255,255,0.03); gap: 8px;">
+                                            <small class="text-muted flex-shrink-0" style="font-size: 0.7rem;">M{{ $match->match_number }}</small>
+                                            <div class="text-center flex-grow-1" style="font-size: 0.7rem; color: #94a3b8;">
+                                                @if($match->match_date)
+                                                    <i class="bi bi-clock mr-1" style="font-size: 0.65rem;"></i>
+                                                    {{ $match->match_date->format('d M, H:i') }}
+                                                @else
+                                                    <span class="text-muted">TBA</span>
+                                                @endif
+                                            </div>
                                             @if($match->status === 'live')
-                                                <span class="badge badge-danger" style="font-size: 0.65rem; padding: 2px 6px;">LIVE</span>
+                                                <span class="badge badge-danger flex-shrink-0" style="font-size: 0.65rem; padding: 2px 6px;">LIVE</span>
                                             @elseif($match->status === 'finished')
-                                                <span class="badge badge-success" style="font-size: 0.65rem; padding: 2px 6px;">DONE</span>
+                                                <span class="badge badge-success flex-shrink-0" style="font-size: 0.65rem; padding: 2px 6px;">DONE</span>
                                             @else
-                                                <span class="badge badge-secondary" style="font-size: 0.65rem; padding: 2px 6px;">VS</span>
+                                                <span class="badge badge-secondary flex-shrink-0" style="font-size: 0.65rem; padding: 2px 6px;">VS</span>
                                             @endif
                                         </div>
                                         

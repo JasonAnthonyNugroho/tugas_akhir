@@ -17,10 +17,17 @@
                 data-toggle="modal" data-target="#generateBracketModal">
                 <i class="bi bi-diagram-3 mr-2"></i> Bracket Otomatis
             </button>
-            <button type="button" class="btn btn-primary shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0"
+            <button type="button" class="btn btn-primary shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0 mr-2"
                 data-toggle="modal" data-target="#addMatchModal">
                 <i class="bi bi-plus-lg mr-2"></i> Tambah Pertandingan
             </button>
+            <form action="{{ route('admin.clear-matches') }}" method="POST" class="d-inline" 
+                  onsubmit="return confirm('⚠️ Yakin ingin menghapus SEMUA pertandingan & turnamen? Data tim, sport, dan admin tetap aman.')">
+                @csrf
+                <button type="submit" class="btn btn-outline-danger shadow-sm font-weight-bold px-3 py-2 mt-3 mt-md-0" style="font-size: 0.85rem;">
+                    <i class="bi bi-trash mr-1"></i> Clear Matches
+                </button>
+            </form>
         </div>
     </div>
 
@@ -237,6 +244,18 @@
                                 <i class="bi bi-lightbulb mr-1"></i> 
                                 Keterangan akan ditampilkan di bracket untuk membantu peserta memahami jenis pertandingan.
                             </small>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="small font-weight-bold text-uppercase text-muted mb-2">
+                                <i class="bi bi-calendar mr-1"></i> Tanggal Mulai
+                            </label>
+                            <input type="date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="small font-weight-bold text-uppercase text-muted mb-2">
+                                <i class="bi bi-calendar-check mr-1"></i> Tanggal Selesai
+                            </label>
+                            <input type="date" name="end_date" class="form-control" required>
                         </div>
                     </div>
                     
