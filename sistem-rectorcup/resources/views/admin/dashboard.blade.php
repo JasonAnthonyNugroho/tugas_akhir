@@ -3,31 +3,36 @@
 @section('title', 'Kelola Jadwal')
 
 @section('content')
-    <div class="mb-5 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-        <div>
+    <div class="admin-header mb-5">
+        <div class="admin-header-title">
             <h2 class="font-weight-bold mb-1">Manajemen Pertandingan</h2>
-            <p class="text-muted">Kelola bracket, jadwal, dan aktivasi pertandingan Rector Cup.</p>
+            <p class="text-muted mb-0">Kelola bracket, jadwal, dan aktivasi pertandingan Rector Cup.</p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('admin.tournament.bracket.builder') }}" 
-               class="btn btn-success shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0 mr-2">
-                <i class="bi bi-magic mr-2"></i> Custom Bracket Builder
+
+        <div class="admin-header-actions">
+            {{-- Primary CTA: Custom Bracket Builder (recommended path) --}}
+            <a href="{{ route('admin.tournament.bracket.builder') }}"
+               class="btn btn-primary-action">
+                <i class="bi bi-magic mr-2"></i>
+                <span>Buat Bracket</span>
             </a>
-            <button type="button" class="btn btn-outline-primary shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0 mr-2"
-                data-toggle="modal" data-target="#generateBracketModal">
-                <i class="bi bi-diagram-3 mr-2"></i> Bracket Otomatis
-            </button>
-            <button type="button" class="btn btn-primary shadow-sm font-weight-bold px-4 py-2 mt-3 mt-md-0 mr-2"
-                data-toggle="modal" data-target="#addMatchModal">
-                <i class="bi bi-plus-lg mr-2"></i> Tambah Pertandingan
-            </button>
-            <form action="{{ route('admin.clear-matches') }}" method="POST" class="d-inline" 
-                  onsubmit="return confirm('⚠️ Yakin ingin menghapus SEMUA pertandingan & turnamen? Data tim, sport, dan admin tetap aman.')">
-                @csrf
-                <button type="submit" class="btn btn-outline-danger shadow-sm font-weight-bold px-3 py-2 mt-3 mt-md-0" style="font-size: 0.85rem;">
-                    <i class="bi bi-trash mr-1"></i> Clear Matches
+
+            {{-- Secondary actions --}}
+            <div class="admin-header-secondary">
+                <button type="button" class="btn btn-secondary-action"
+                        data-toggle="modal" data-target="#generateBracketModal"
+                        title="Generate bracket otomatis dari tim yang dipilih">
+                    <i class="bi bi-diagram-3 mr-2"></i>
+                    <span>Bracket Otomatis</span>
                 </button>
-            </form>
+                <button type="button" class="btn btn-secondary-action"
+                        data-toggle="modal" data-target="#addMatchModal"
+                        title="Tambah satu pertandingan independen (di luar bracket)">
+                    <i class="bi bi-plus-lg mr-2"></i>
+                    <span>Tambah Pertandingan</span>
+                </button>
+            </div>
+
         </div>
     </div>
 
@@ -70,14 +75,6 @@
                                             @csrf
                                             <button type="submit" class="dropdown-item text-warning small font-weight-bold">
                                                 <i class="bi bi-shuffle mr-2"></i> Reroll Bracket
-                                            </button>
-                                        </form>
-                                        <div class="dropdown-divider border-secondary"></div>
-                                        <form action="{{ route('admin.tournament.delete', $tournament->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus turnamen ini? Semua pertandingan di dalamnya juga akan dihapus.')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="dropdown-item text-danger small font-weight-bold">
-                                                <i class="bi bi-trash mr-2"></i> Hapus Turnamen
                                             </button>
                                         </form>
                                     </div>
@@ -194,146 +191,144 @@
         </div>
     </div>
 
-    {{-- Modal Buat Bracket --}}
-<div class="modal fade" id="generateBracketModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content"
-            style="background: var(--bg-dark); border: 1px solid var(--glass-border); border-radius: 24px;">
-            <div class="modal-header border-0 p-4"
-                style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important; border-radius: 24px 24px 0 0;">
-                <h5 class="modal-title text-white font-weight-bold">
-                    <i class="bi bi-diagram-3 mr-2"></i> Buat Bracket Tournament
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+    {{-- Modal Buat Bracket Otomatis --}}
+<div class="modal fade dash-modal" id="generateBracketModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content dash-modal-content">
+            {{-- Header --}}
+            <div class="dash-modal-header">
+                <div class="dash-modal-icon"><i class="bi bi-diagram-3"></i></div>
+                <div class="flex-grow-1">
+                    <h5 class="dash-modal-title">Bracket Otomatis</h5>
+                    <p class="dash-modal-subtitle">Generate bracket dengan pengacakan tim otomatis</p>
+                </div>
+                <button type="button" class="dash-modal-close" data-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
 
             <form action="{{ route('admin.bracket.generate') }}" method="POST" class="mb-0">
                 @csrf
-                <div class="modal-body p-4">
-                    <div class="row">
-                        <div class="col-md-8 mb-4">
-                            <label class="small font-weight-bold text-uppercase text-muted mb-2">Nama Tournament</label>
-                            <input type="text" name="tournament_name" class="form-control"
-                                placeholder="Contoh: Rector Cup Futsal 2026" required>
+                <div class="modal-body dash-modal-body">
+
+                    {{-- Section: Info Turnamen --}}
+                    <div class="dash-form-section">
+                        <div class="dash-section-title">
+                            <i class="bi bi-info-square"></i>
+                            <span>Informasi Turnamen</span>
                         </div>
-                        <div class="col-md-4 mb-4">
-                            <label class="small font-weight-bold text-uppercase text-muted mb-2">Jumlah Tim</label>
-                            <select name="manual_team_count" class="form-control">
-                                <option value="">Otomatis (Ikuti List Tim)</option>
-                                <option value="4">4 Tim</option>
-                                <option value="8">8 Tim</option>
-                                <option value="16">16 Tim</option>
-                            </select>
-                        </div>
-                        <div class="col-md-12 mb-4">
-                            <label class="small font-weight-bold text-uppercase text-muted mb-2">Cabang Olahraga</label>
-                            <select name="sport_id" class="form-control" required>
-                                <option value="" disabled selected>Pilih Cabang Sport...</option>
-                                @foreach($sports as $sport)
-                                    <option value="{{ $sport->id }}">{{ $sport->nama_sport }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-12 mb-4">
-                            <label class="small font-weight-bold text-uppercase text-muted mb-2">
-                                <i class="bi bi-info-circle mr-1"></i> Keterangan Bracket
-                            </label>
-                            <input type="text" name="keterangan" class="form-control" 
-                                placeholder="Contoh: Basket Putra, Basket Putri, Badminton Ganda Putra, dll.">
-                            <small class="text-muted mt-1 d-block">
-                                <i class="bi bi-lightbulb mr-1"></i> 
-                                Keterangan akan ditampilkan di bracket untuk membantu peserta memahami jenis pertandingan.
-                            </small>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="small font-weight-bold text-uppercase text-muted mb-2">
-                                <i class="bi bi-calendar mr-1"></i> Tanggal Mulai
-                            </label>
-                            <input type="date" name="start_date" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="small font-weight-bold text-uppercase text-muted mb-2">
-                                <i class="bi bi-calendar-check mr-1"></i> Tanggal Selesai
-                            </label>
-                            <input type="date" name="end_date" class="form-control" required>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="dash-label">Nama Tournament <span class="text-danger">*</span></label>
+                                <input type="text" name="tournament_name" class="dash-input"
+                                       placeholder="Contoh: Rector Cup Futsal 2026" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="dash-label">Jumlah Tim</label>
+                                <select name="manual_team_count" class="dash-input">
+                                    <option value="">Auto (ikuti list)</option>
+                                    <option value="4">4 Tim</option>
+                                    <option value="8">8 Tim</option>
+                                    <option value="16">16 Tim</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="dash-label">Cabang Olahraga <span class="text-danger">*</span></label>
+                                <select name="sport_id" class="dash-input" required>
+                                    <option value="" disabled selected>Pilih cabang olahraga...</option>
+                                    @foreach($sports as $sport)
+                                        <option value="{{ $sport->id }}">{{ $sport->nama_sport }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="dash-label">Keterangan Bracket</label>
+                                <input type="text" name="keterangan" class="dash-input"
+                                       placeholder="Contoh: Basket Putra, Badminton Ganda Putra">
+                                <small class="dash-hint">
+                                    <i class="bi bi-lightbulb mr-1"></i>
+                                    Keterangan ditampilkan di bracket untuk konteks tambahan.
+                                </small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="dash-label"><i class="bi bi-calendar-event mr-1"></i> Tanggal Mulai <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" class="dash-input" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="dash-label"><i class="bi bi-calendar-check mr-1"></i> Tanggal Selesai <span class="text-danger">*</span></label>
+                                <input type="date" name="end_date" class="dash-input" required>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);">
-                        <label class="small font-weight-bold text-uppercase text-muted mb-3 d-block">
-                            <i class="bi bi-people mr-1"></i> Pilih Tim Peserta (Pilih Minimal 2)
-                        </label>
-                        
-                        <div class="alert alert-info py-2 px-3 mb-3 border-0 small" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-radius: 12px;">
-                            <i class="bi bi-info-circle mr-1"></i> <b>Tips:</b> Jika ingin membuat bracket kosong (Manual Input), Anda bisa melewati pemilihan tim ini dan langsung klik Generate.
+
+                    {{-- Section: Pilih Tim --}}
+                    <div class="dash-form-section">
+                        <div class="dash-section-title">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Tim Peserta</span>
+                            <span class="dash-section-hint">Minimal 2 tim, atau biarkan kosong untuk bracket manual</span>
                         </div>
-                        
-                        <div style="max-height: 300px; overflow-y: auto;">
+
+                        <div class="dash-info-banner">
+                            <i class="bi bi-info-circle-fill mr-2"></i>
+                            <span><strong>Tips:</strong> Lewati pemilihan tim ini jika ingin bracket kosong (input manual nanti).</span>
+                        </div>
+
+                        <div class="dash-team-picker">
                             @php
                                 $groupedTeams = $teams->groupBy('prodi');
                             @endphp
-                            
+
                             {{-- Opsi Seluruh Prodi --}}
                             @if($groupedTeams->has('Semua Prodi'))
-                                <div class="mb-4">
-                                    <h6 class="text-warning small font-weight-bold text-uppercase mb-3">
-                                        <i class="bi bi-globe mr-1"></i> Opsi Khusus
-                                    </h6>
-                                    <div class="row">
-                                        @foreach($groupedTeams['Semua Prodi'] as $team)
-                                            <div class="col-md-12 mb-2">
-                                                <div class="custom-control custom-checkbox">
-                                                    <input type="checkbox" name="team_ids[]" value="{{ $team->id }}"
-                                                        class="custom-control-input" id="team_bracket_{{ $team->id }}">
-                                                    <label class="custom-control-label text-white font-weight-medium"
-                                                        for="team_bracket_{{ $team->id }}">
-                                                        <i class="bi bi-people mr-2"></i>{{ $team->name }} 
-                                                        <span class="text-muted small ml-2">(Untuk pertandingan yang semua prodi berpartisipasi, misal: PUBG Mobile)</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        @endforeach
+                                <div class="dash-prodi-group">
+                                    <div class="dash-prodi-header dash-prodi-special">
+                                        <i class="bi bi-globe2 mr-2"></i>Opsi Khusus
                                     </div>
+                                    @foreach($groupedTeams['Semua Prodi'] as $team)
+                                        <label class="dash-team-pick dash-team-pick-wide" for="team_bracket_{{ $team->id }}">
+                                            <input type="checkbox" name="team_ids[]" value="{{ $team->id }}"
+                                                   id="team_bracket_{{ $team->id }}">
+                                            <span class="dash-team-check"><i class="bi bi-check-lg"></i></span>
+                                            <div class="flex-grow-1">
+                                                <div class="dash-team-name"><i class="bi bi-people mr-1"></i>{{ $team->name }}</div>
+                                                <small class="text-muted">Untuk cabang yang semua prodi ikut, misal PUBG Mobile</small>
+                                            </div>
+                                        </label>
+                                    @endforeach
                                 </div>
-                                @if(count($groupedTeams) > 1)
-                                    <div class="border-top border-secondary my-3 opacity-25"></div>
-                                @endif
                             @endif
-                            
+
                             {{-- Tim per Prodi --}}
                             @foreach($groupedTeams as $prodi => $prodiTeams)
                                 @if($prodi != 'Semua Prodi')
-                                    <div class="mb-4">
-                                        <h6 class="text-primary small font-weight-bold text-uppercase mb-3">
-                                            <i class="bi bi-building mr-1"></i> {{ $prodi }}
-                                        </h6>
-                                        <div class="row">
+                                    <div class="dash-prodi-group">
+                                        <div class="dash-prodi-header">
+                                            <i class="bi bi-building mr-2"></i>{{ $prodi }}
+                                            <span class="dash-prodi-count">{{ $prodiTeams->count() }} tim</span>
+                                        </div>
+                                        <div class="dash-team-grid">
                                             @foreach($prodiTeams as $team)
-                                                <div class="col-md-6 mb-2">
-                                                    <div class="custom-control custom-checkbox">
-                                                        <input type="checkbox" name="team_ids[]" value="{{ $team->id }}"
-                                                            class="custom-control-input" id="team_bracket_{{ $team->id }}">
-                                                        <label class="custom-control-label text-white font-weight-medium"
-                                                            for="team_bracket_{{ $team->id }}">
-                                                            {{ $team->name }}
-                                                        </label>
-                                                    </div>
-                                                </div>
+                                                <label class="dash-team-pick" for="team_bracket_{{ $team->id }}">
+                                                    <input type="checkbox" name="team_ids[]" value="{{ $team->id }}"
+                                                           id="team_bracket_{{ $team->id }}">
+                                                    <span class="dash-team-check"><i class="bi bi-check-lg"></i></span>
+                                                    <span class="dash-team-name">{{ $team->name }}</span>
+                                                </label>
                                             @endforeach
                                         </div>
                                     </div>
-                                    @if(!$loop->last)
-                                        <div class="border-top border-secondary my-3 opacity-25"></div>
-                                    @endif
                                 @endif
                             @endforeach
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-footer border-0 p-4">
-                    <button type="button" class="btn btn-link text-muted font-weight-bold text-decoration-none" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary px-5">Generate Bracket</button>
+                <div class="dash-modal-footer">
+                    <button type="button" class="btn-modal-cancel" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-modal-primary">
+                        <i class="bi bi-magic mr-2"></i>Generate Bracket
+                    </button>
                 </div>
             </form>
         </div>
@@ -341,78 +336,113 @@
 </div>
 
     {{-- Modal Tambah Pertandingan --}}
-    <div class="modal fade" id="addMatchModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-            <div class="modal-content"
-                style="background: var(--bg-dark); border: 1px solid var(--glass-border); border-radius: 24px;">
-                <div class="modal-header border-0 p-4"
-                    style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important; border-radius: 24px 24px 0 0;">
-                    <h5 class="modal-title text-white font-weight-bold">
-                        <i class="bi bi-calendar-plus mr-2"></i> Input Jadwal Baru
-                    </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+    <div class="modal fade dash-modal" id="addMatchModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content dash-modal-content">
+                {{-- Header --}}
+                <div class="dash-modal-header dash-modal-header-green">
+                    <div class="dash-modal-icon dash-modal-icon-green"><i class="bi bi-calendar-plus"></i></div>
+                    <div class="flex-grow-1">
+                        <h5 class="dash-modal-title">Tambah Pertandingan</h5>
+                        <p class="dash-modal-subtitle">Buat 1 jadwal pertandingan independen (di luar bracket)</p>
+                    </div>
+                    <button type="button" class="dash-modal-close" data-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
+
                 <form id="formTambahJadwal" action="{{ route('pertandingan.store') }}" method="POST">
                     @csrf
-                    <div class="modal-body p-4">
-                        <div class="row">
-                            <div class="col-md-12 mb-4">
-                                <label class="small font-weight-bold text-uppercase text-muted mb-2">Cabang Olahraga (Sport)</label>
-                                <select name="sport_id" id="sportSelect" class="form-control" required>
-                                    <option value="" disabled selected>Pilih Cabang Sport...</option>
-                                    @foreach($sports as $sport)
-                                        <option value="{{ $sport->id }}" data-nama="{{ strtoupper($sport->nama_sport) }}">
-                                            {{ $sport->nama_sport }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                    <div class="modal-body dash-modal-body">
+
+                        {{-- Section: Cabang & Tim --}}
+                        <div class="dash-form-section">
+                            <div class="dash-section-title">
+                                <i class="bi bi-trophy"></i>
+                                <span>Cabang & Tim</span>
                             </div>
-                            <div class="col-md-6 mb-4 team-a-container">
-                                <label class="small font-weight-bold text-uppercase text-muted mb-2">Tim A (Prodi)</label>
-                                <select name="team_a" id="teamASelect" class="form-control" required>
-                                    <option value="" disabled selected>Pilih Tim A...</option>
-                                    @foreach($teams as $team)
-                                        <option value="{{ $team->id }}">{{ $team->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-4 team-b-container">
-                                <label class="small font-weight-bold text-uppercase text-muted mb-2">Tim B (Prodi)</label>
-                                <select name="team_b" id="teamBSelect" class="form-control" required>
-                                    <option value="" disabled selected>Pilih Tim B...</option>
-                                    @foreach($teams as $team)
-                                        <option value="{{ $team->id }}">{{ $team->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="small font-weight-bold text-uppercase text-muted mb-2">Waktu Tanding</label>
-                                <input type="datetime-local" name="waktu" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="small font-weight-bold text-uppercase text-muted mb-2">Lokasi / GOR</label>
-                                <input type="text" name="lokasi" class="form-control" placeholder="Contoh: Lapangan Basket UKDW" required>
-                            </div>
-                        </div>
-                        
-                        {{-- Field Keterangan --}}
-                        <div class="row mt-3">
-                            <div class="col-md-12">
-                                <label class="small font-weight-bold text-uppercase text-muted mb-2">
-                                    <i class="bi bi-info-circle mr-1"></i> Keterangan Pertandingan
-                                </label>
-                                <input type="text" name="keterangan" class="form-control" 
-                                    placeholder="Contoh: Basket Putra, Basket Putri, Badminton Ganda Putra, dll.">
-                                <small class="text-muted mt-1 d-block">
-                                    <i class="bi bi-lightbulb mr-1"></i> 
-                                    Keterangan akan ditampilkan di bracket untuk membantu peserta memahami jenis pertandingan.
-                                </small>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="dash-label">Cabang Olahraga <span class="text-danger">*</span></label>
+                                    <select name="sport_id" id="sportSelect" class="dash-input" required>
+                                        <option value="" disabled selected>Pilih cabang olahraga...</option>
+                                        @foreach($sports as $sport)
+                                            <option value="{{ $sport->id }}" data-nama="{{ strtoupper($sport->nama_sport) }}">
+                                                {{ $sport->nama_sport }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3 team-a-container">
+                                    <label class="dash-label">
+                                        <span class="dash-team-badge dash-team-badge-a">A</span>
+                                        Tim A <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="team_a" id="teamASelect" class="dash-input" required>
+                                        <option value="" disabled selected>Pilih Tim A...</option>
+                                        @foreach($teams as $team)
+                                            <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3 team-b-container">
+                                    <label class="dash-label">
+                                        <span class="dash-team-badge dash-team-badge-b">B</span>
+                                        Tim B <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="team_b" id="teamBSelect" class="dash-input" required>
+                                        <option value="" disabled selected>Pilih Tim B...</option>
+                                        @foreach($teams as $team)
+                                            <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
+
+                        {{-- Section: Jadwal --}}
+                        <div class="dash-form-section">
+                            <div class="dash-section-title">
+                                <i class="bi bi-clock-history"></i>
+                                <span>Jadwal & Lokasi</span>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="dash-label"><i class="bi bi-calendar-event mr-1"></i> Waktu Tanding <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" name="waktu" class="dash-input" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="dash-label"><i class="bi bi-geo-alt mr-1"></i> Lokasi / GOR <span class="text-danger">*</span></label>
+                                    <input type="text" name="lokasi" class="dash-input" placeholder="Contoh: Lapangan Basket UKDW" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Section: Catatan --}}
+                        <div class="dash-form-section">
+                            <div class="dash-section-title">
+                                <i class="bi bi-card-text"></i>
+                                <span>Catatan Tambahan</span>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="dash-label">Keterangan Pertandingan</label>
+                                    <input type="text" name="keterangan" class="dash-input"
+                                           placeholder="Contoh: Basket Putra, Badminton Ganda Putra">
+                                    <small class="dash-hint">
+                                        <i class="bi bi-lightbulb mr-1"></i>
+                                        Akan tampil di kartu match untuk konteks tambahan.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                    <div class="modal-footer border-0 p-4">
-                        <button type="button" class="btn btn-link text-muted font-weight-bold text-decoration-none" data-dismiss="modal">Batal</button>
-                        <button type="button" onclick="confirmSave()" class="btn btn-primary px-5">Simpan Jadwal</button>
+                    <div class="dash-modal-footer">
+                        <button type="button" class="btn-modal-cancel" data-dismiss="modal">Batal</button>
+                        <button type="button" onclick="confirmSave()" class="btn-modal-primary btn-modal-primary-green">
+                            <i class="bi bi-check2-circle mr-2"></i>Simpan Jadwal
+                        </button>
                     </div>
                 </form>
             </div>
@@ -523,6 +553,496 @@
     /* Ensure buttons are clickable */
     .modal-open .btn {
         pointer-events: auto !important;
+    }
+
+    /* ─────────── Admin Header (Manajemen Pertandingan) ─────────── */
+    .admin-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 20px 22px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.04));
+        border: 1px solid rgba(99,102,241,0.15);
+        border-radius: 18px;
+    }
+    .admin-header-title h2 {
+        font-size: 1.5rem;
+        background: linear-gradient(90deg, #fff, #c7d2fe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .admin-header-title p { font-size: 0.85rem; }
+
+    .admin-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .admin-header-secondary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-left: 12px;
+        border-left: 1px solid rgba(255,255,255,0.1);
+    }
+    .admin-header-danger {
+        padding-left: 8px;
+        margin-left: 4px;
+        border-left: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Primary action button — paling menonjol (gradient ungu) */
+    .btn-primary-action {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 22px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .btn-primary-action:hover {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(99,102,241,0.5);
+        text-decoration: none;
+    }
+    .btn-primary-action:focus, .btn-primary-action:active {
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.4);
+    }
+
+    /* Secondary action — outline subtle */
+    .btn-secondary-action {
+        display: inline-flex;
+        align-items: center;
+        padding: 9px 16px;
+        background: rgba(255,255,255,0.04);
+        color: #cbd5e1;
+        font-weight: 500;
+        font-size: 0.85rem;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .btn-secondary-action:hover {
+        background: rgba(99,102,241,0.12);
+        border-color: rgba(99,102,241,0.4);
+        color: #fff;
+    }
+    .btn-secondary-action:focus, .btn-secondary-action:active {
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+    }
+
+    /* Kebab button (3-dots) untuk danger zone */
+    .btn-kebab {
+        width: 38px; height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        background: rgba(255,255,255,0.04);
+        color: #94a3b8;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+    }
+    .btn-kebab:hover {
+        background: rgba(239,68,68,0.12);
+        border-color: rgba(239,68,68,0.4);
+        color: #fca5a5;
+    }
+    .btn-kebab:focus { box-shadow: 0 0 0 3px rgba(239,68,68,0.2); }
+
+    /* Dropdown menu di kebab — dark theme */
+    .admin-header-menu {
+        background: #1a1f2e;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 8px;
+        min-width: 280px;
+        margin-top: 6px;
+    }
+    .admin-header-menu .dropdown-header {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        color: #ef4444 !important;
+    }
+    .admin-header-menu .dropdown-item {
+        padding: 10px 12px;
+        border-radius: 8px;
+        white-space: normal;
+        line-height: 1.3;
+    }
+    .admin-header-menu .dropdown-item:hover {
+        background: rgba(239,68,68,0.1);
+        color: #fca5a5 !important;
+    }
+    .admin-header-menu .dropdown-item small { line-height: 1.3; }
+    .admin-header-menu form { margin: 0; }
+
+    /* Mobile: stack vertikal, reset borders */
+    @media (max-width: 767px) {
+        .admin-header { padding: 16px; }
+        .admin-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+            gap: 8px;
+        }
+        .admin-header-secondary,
+        .admin-header-danger {
+            border-left: none;
+            padding-left: 0;
+            margin-left: 0;
+        }
+        .btn-primary-action { width: 100%; justify-content: center; }
+        .btn-secondary-action { flex: 1; justify-content: center; }
+    }
+
+    /* ─────────── Dash Modals (Bracket Otomatis & Tambah Pertandingan) ─────────── */
+    .dash-modal .modal-content.dash-modal-content {
+        background: #0f172a;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    /* Header dengan icon avatar */
+    .dash-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 22px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.12));
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .dash-modal-header-green {
+        background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(59,130,246,0.1));
+    }
+    .dash-modal-icon {
+        width: 44px; height: 44px;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+    }
+    .dash-modal-icon-green {
+        background: linear-gradient(135deg, #10b981, #059669);
+        box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+    }
+    .dash-modal-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        line-height: 1.2;
+    }
+    .dash-modal-subtitle {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        margin: 2px 0 0 0;
+        line-height: 1.3;
+    }
+    .dash-modal-close {
+        width: 34px; height: 34px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .dash-modal-close:hover {
+        background: rgba(239,68,68,0.15);
+        border-color: rgba(239,68,68,0.3);
+        color: #fca5a5;
+    }
+
+    /* Body */
+    .dash-modal-body {
+        padding: 22px;
+        background: #0f172a;
+        max-height: calc(100vh - 240px);
+        overflow-y: auto;
+    }
+
+    /* Section card */
+    .dash-form-section {
+        background: rgba(255,255,255,0.025);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+    }
+    .dash-form-section:last-child { margin-bottom: 0; }
+    .dash-section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #c7d2fe;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .dash-section-title i {
+        color: #818cf8;
+        font-size: 0.95rem;
+    }
+    .dash-section-hint {
+        margin-left: auto;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
+        color: #64748b;
+    }
+
+    /* Input fields */
+    .dash-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #cbd5e1;
+        margin-bottom: 6px;
+    }
+    .dash-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: rgba(15,23,42,0.6);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        color: #f1f5f9;
+        font-size: 0.9rem;
+        transition: all 0.15s ease;
+    }
+    .dash-input::placeholder { color: #64748b; }
+    .dash-input:focus {
+        outline: none;
+        border-color: rgba(99,102,241,0.5);
+        background: rgba(15,23,42,0.9);
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+    .dash-input:disabled { opacity: 0.5; cursor: not-allowed; }
+    select.dash-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%2394a3b8' d='M8 11.5L3 6h10z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+        padding-right: 36px;
+    }
+    .dash-input[type="date"], .dash-input[type="datetime-local"] {
+        color-scheme: dark;
+    }
+    .dash-hint {
+        display: block;
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-top: 6px;
+    }
+
+    /* Team A/B badge di label */
+    .dash-team-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px; height: 18px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border-radius: 4px;
+        margin-right: 6px;
+        color: #fff;
+    }
+    .dash-team-badge-a { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+    .dash-team-badge-b { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+
+    /* Info banner */
+    .dash-info-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 10px 14px;
+        background: rgba(59,130,246,0.08);
+        border: 1px solid rgba(59,130,246,0.2);
+        border-left: 3px solid #3b82f6;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        color: #bfdbfe;
+        margin-bottom: 14px;
+    }
+    .dash-info-banner i { color: #60a5fa; margin-top: 2px; }
+
+    /* Team picker */
+    .dash-team-picker {
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 4px 2px;
+    }
+    .dash-team-picker::-webkit-scrollbar { width: 6px; }
+    .dash-team-picker::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    .dash-prodi-group {
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed rgba(255,255,255,0.06);
+    }
+    .dash-prodi-group:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+    .dash-prodi-header {
+        display: flex;
+        align-items: center;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #818cf8;
+        margin-bottom: 8px;
+    }
+    .dash-prodi-special { color: #fbbf24; }
+    .dash-prodi-count {
+        margin-left: auto;
+        background: rgba(255,255,255,0.05);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.65rem;
+        color: #94a3b8;
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    .dash-team-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    @media (max-width: 575px) {
+        .dash-team-grid { grid-template-columns: 1fr; }
+    }
+
+    .dash-team-pick {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 9px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin: 0;
+    }
+    .dash-team-pick-wide { padding: 10px 14px; }
+    .dash-team-pick input[type="checkbox"] {
+        width: 0;
+        height: 0;
+        opacity: 0;
+        margin: 0;
+        padding: 0;
+        pointer-events: none;
+        flex: 0 0 0;
+    }
+    .dash-team-pick:hover {
+        background: rgba(99,102,241,0.06);
+        border-color: rgba(99,102,241,0.25);
+    }
+    .dash-team-pick:has(input:checked) {
+        background: rgba(99,102,241,0.14);
+        border-color: rgba(99,102,241,0.5);
+        box-shadow: 0 0 0 1px rgba(99,102,241,0.3);
+    }
+    .dash-team-check {
+        width: 20px; height: 20px;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.04);
+        border: 1.5px solid rgba(255,255,255,0.15);
+        border-radius: 5px;
+        color: transparent;
+        font-size: 0.75rem;
+        transition: all 0.15s ease;
+    }
+    .dash-team-pick:has(input:checked) .dash-team-check {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-color: #6366f1;
+        color: #fff;
+    }
+    .dash-team-name {
+        flex-grow: 1;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #e2e8f0;
+        line-height: 1.3;
+    }
+    .dash-team-pick:has(input:checked) .dash-team-name { color: #fff; font-weight: 600; }
+
+    /* Footer */
+    .dash-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 22px;
+        background: rgba(0,0,0,0.2);
+        border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .btn-modal-cancel {
+        padding: 9px 18px;
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 9px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.15s ease;
+    }
+    .btn-modal-cancel:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .btn-modal-primary {
+        display: inline-flex;
+        align-items: center;
+        padding: 9px 22px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+        transition: all 0.15s ease;
+    }
+    .btn-modal-primary:hover {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(99,102,241,0.5);
+    }
+    .btn-modal-primary-green {
+        background: linear-gradient(135deg, #10b981, #059669);
+        box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+    }
+    .btn-modal-primary-green:hover {
+        background: linear-gradient(135deg, #059669, #047857);
+        box-shadow: 0 6px 18px rgba(16,185,129,0.5);
     }
 </style>
 @endsection

@@ -45,38 +45,57 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // Data Program Studi Sarjana UKDW (Dukungan Multi-Tim: A & B)
+        // Data Program Studi Sarjana UKDW (sumber: list resmi biaya kuliah)
+        // Setiap prodi mendapat 2 slot tim: A & B
         $prodis = [
-            'Informatika',
-            'Sistem Informasi',
-            'Arsitektur',
-            'Desain Produk',
+            'Kedokteran',
+            'Filsafat Keilahian',
             'Manajemen',
             'Akuntansi',
+            'Arsitektur',
+            'Desain Produk',
+            'Informatika',
+            'Sistem Informasi',
             'Biologi',
-            'Kedokteran',
-            'Teologi',
-            'Pendidikan Bahasa Inggris'
+            'Teknologi Pangan',
+            'Pendidikan Bahasa Inggris',
+            'Studi Humanitas',
         ];
 
-        // Tambahkan Tim Khusus Battle Royale
+        // Tim Khusus Battle Royale / cabang yang melibatkan semua prodi (mis. PUBG Mobile, Catur)
         Team::firstOrCreate([
             'name' => 'Seluruh Prodi',
-            'prodi' => 'Semua Prodi'
+        ], [
+            'prodi' => 'Semua Prodi',
         ]);
 
+        // Generate 2 tim (A & B) per prodi
         foreach ($prodis as $prodi) {
-            // Membuat Tim A
-            Team::firstOrCreate([
-                'name' => $prodi . ' A',
-                'prodi' => $prodi
-            ]);
+            Team::firstOrCreate(
+                ['name' => $prodi . ' A'],
+                ['prodi' => $prodi]
+            );
+            Team::firstOrCreate(
+                ['name' => $prodi . ' B'],
+                ['prodi' => $prodi]
+            );
+        }
 
-            // Membuat Tim B
-            Team::firstOrCreate([
-                'name' => $prodi . ' B',
-                'prodi' => $prodi
-            ]);
+        // Cleanup: hapus tim dari prodi lama yang tidak ada di list baru,
+        // HANYA jika tim tersebut belum dipakai di pertandingan/turnamen manapun.
+        $validProdis = array_merge($prodis, ['Semua Prodi']);
+        $orphanTeams = Team::whereNotIn('prodi', $validProdis)->get();
+        foreach ($orphanTeams as $team) {
+            $usedInMatch = \App\Models\Pertandingan::where('team_a_id', $team->id)
+                ->orWhere('team_b_id', $team->id)
+                ->exists();
+            $usedInTournament = \DB::table('tournament_teams')->where('team_id', $team->id)->exists();
+
+            if (!$usedInMatch && !$usedInTournament) {
+                $team->delete();
+            } else {
+                $this->command->warn("Tim '{$team->name}' (prodi: {$team->prodi}) tidak dihapus karena masih dipakai di pertandingan/turnamen.");
+            }
         }
 
         // Recap data turnamen historis
