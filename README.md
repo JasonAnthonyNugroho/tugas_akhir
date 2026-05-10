@@ -89,11 +89,11 @@ php artisan migrate:fresh --seed
 # 6. Setup storage symlink
 php artisan storage:link
 ```
-
 ### Akun Default Admin
+```bash
 - **Username**: `admin`
 - **Password**: `admin#1234`
-
+```
 ---
 
 ## 🏃 Menjalankan Aplikasi
