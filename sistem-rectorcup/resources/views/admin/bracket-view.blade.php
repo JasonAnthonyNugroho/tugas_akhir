@@ -97,7 +97,6 @@
                                         
                                         {{-- Match Header dengan Tanggal --}}
                                         <div class="match-header">
-                                            <small class="match-number">M{{ $match->match_number }}</small>
                                             <div class="match-date">
                                                 @if($match->match_date)
                                                     <i class="bi bi-clock mr-1"></i>

@@ -240,37 +240,23 @@
                                             $leftName = $match->teamA?->name ?? ($labelParts[0] ?? 'TBD');
                                             $rightName = $match->teamB?->name ?? ($labelParts[1] ?? 'TBD');
                                         @endphp
+                                        @php
+                                            $aWin = $match->winner_id && $match->winner_id == $match->team_a_id;
+                                            $bWin = $match->winner_id && $match->winner_id == $match->team_b_id;
+                                        @endphp
                                         <a href="{{ route('pertandingan.show', $match->id) }}" class="bracket-match-link text-decoration-none">
-                                            <div class="bracket-match mb-4 p-3 rounded"
-                                                style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); position: relative; transition: all 0.3s ease;">
-                                                {{-- Tim A --}}
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span class="small font-weight-bold {{ $match->winner_id == $match->team_a_id && $match->team_a_id ? 'text-primary' : 'text-white' }}">
-                                                        {{ $leftName }}
-                                                    </span>
-                                                    <span class="badge {{ $match->winner_id == $match->team_a_id && $match->team_a_id ? 'badge-primary' : 'badge-dark' }} px-2">
-                                                        {{ $match->score_a }}
-                                                    </span>
+                                            <div class="bracket-match">
+                                                <div class="bm-row {{ $aWin ? 'is-winner' : ($match->winner_id ? 'is-loser' : '') }}">
+                                                    <span class="bm-team">{{ $leftName }}</span>
+                                                    <span class="bm-score">{{ $match->score_a ?? '-' }}</span>
                                                 </div>
-                                                {{-- Tim B --}}
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span class="small font-weight-bold {{ $match->winner_id == $match->team_b_id && $match->team_b_id ? 'text-primary' : 'text-white' }}">
-                                                        {{ $rightName }}
-                                                    </span>
-                                                    <span class="badge {{ $match->winner_id == $match->team_b_id && $match->team_b_id ? 'badge-primary' : 'badge-dark' }} px-2">
-                                                        {{ $match->score_b }}
-                                                    </span>
+                                                <div class="bm-row {{ $bWin ? 'is-winner' : ($match->winner_id ? 'is-loser' : '') }}">
+                                                    <span class="bm-team">{{ $rightName }}</span>
+                                                    <span class="bm-score">{{ $match->score_b ?? '-' }}</span>
                                                 </div>
                                                 @if($match->keterangan)
-                                                <div class="mt-2 text-center">
-                                                    <span class="badge badge-info px-2 py-1" style="font-size: 0.6rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">
-                                                        {{ $match->keterangan }}
-                                                    </span>
-                                                </div>
+                                                    <div class="bm-note">{{ $match->keterangan }}</div>
                                                 @endif
-                                                <div class="mt-2 text-center">
-                                                    <span class="text-muted" style="font-size: 0.6rem;"><i class="bi bi-search mr-1"></i> Klik Detail</span>
-                                                </div>
                                             </div>
                                         </a>
                                     @endforeach
@@ -293,37 +279,23 @@
                                     <i class="bi bi-award-fill mr-1"></i>{{ $thirdPlaceMatch->babak }}
                                 </h5>
                                 <div class="match-list d-flex flex-column justify-content-center h-100">
+                                    @php
+                                        $t3aWin = $thirdPlaceMatch->winner_id && $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_a_id;
+                                        $t3bWin = $thirdPlaceMatch->winner_id && $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_b_id;
+                                    @endphp
                                     <a href="{{ route('pertandingan.show', $thirdPlaceMatch->id) }}" class="bracket-match-link text-decoration-none">
-                                        <div class="bracket-match mb-4 p-3 rounded"
-                                            style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); position: relative; transition: all 0.3s ease;">
-                                            {{-- Tim A --}}
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="small font-weight-bold {{ $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_a_id && $thirdPlaceMatch->team_a_id ? 'text-primary' : 'text-white' }}">
-                                                    {{ $thirdLeft }}
-                                                </span>
-                                                <span class="badge {{ $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_a_id && $thirdPlaceMatch->team_a_id ? 'badge-primary' : 'badge-dark' }} px-2">
-                                                    {{ $thirdPlaceMatch->score_a }}
-                                                </span>
+                                        <div class="bracket-match">
+                                            <div class="bm-row {{ $t3aWin ? 'is-winner' : ($thirdPlaceMatch->winner_id ? 'is-loser' : '') }}">
+                                                <span class="bm-team">{{ $thirdLeft }}</span>
+                                                <span class="bm-score">{{ $thirdPlaceMatch->score_a ?? '-' }}</span>
                                             </div>
-                                            {{-- Tim B --}}
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="small font-weight-bold {{ $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_b_id && $thirdPlaceMatch->team_b_id ? 'text-primary' : 'text-white' }}">
-                                                    {{ $thirdRight }}
-                                                </span>
-                                                <span class="badge {{ $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_b_id && $thirdPlaceMatch->team_b_id ? 'badge-primary' : 'badge-dark' }} px-2">
-                                                    {{ $thirdPlaceMatch->score_b }}
-                                                </span>
+                                            <div class="bm-row {{ $t3bWin ? 'is-winner' : ($thirdPlaceMatch->winner_id ? 'is-loser' : '') }}">
+                                                <span class="bm-team">{{ $thirdRight }}</span>
+                                                <span class="bm-score">{{ $thirdPlaceMatch->score_b ?? '-' }}</span>
                                             </div>
                                             @if($thirdPlaceMatch->keterangan)
-                                            <div class="mt-2 text-center">
-                                                <span class="badge badge-info px-2 py-1" style="font-size: 0.6rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">
-                                                    {{ $thirdPlaceMatch->keterangan }}
-                                                </span>
-                                            </div>
+                                                <div class="bm-note">{{ $thirdPlaceMatch->keterangan }}</div>
                                             @endif
-                                            <div class="mt-2 text-center">
-                                                <span class="text-muted" style="font-size: 0.6rem;"><i class="bi bi-search mr-1"></i> Klik Detail</span>
-                                            </div>
                                         </div>
                                     </a>
                                 </div>
@@ -409,8 +381,8 @@
                                                 <i class="bi {{ $p->sport->icon ?? 'bi-trophy' }} mr-2"></i>
                                                 {{ $p->sport->nama_sport ?? 'Tournament' }}{{ $p->sport?->sub_kategori ? ' - ' . $p->sport->sub_kategori : '' }}
                                             </span>
-                                            <span class="text-muted small">
-                                                <i class="bi bi-check-circle-fill text-success mr-1"></i> Selesai
+                                            <span class="status-pill status-finished">
+                                                <i class="bi bi-check-circle-fill"></i> Selesai
                                             </span>
                                         </div>
 
@@ -632,9 +604,98 @@
         transform: translate(2px, -2px);
     }
 
+    /* ─────────── Unified status pills (sinkron dengan detail page) ─────────── */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 1px solid transparent;
+    }
+    .status-live    { background: rgba(239,68,68,0.12);   color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+    .status-finished{ background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
+    .status-upcoming{ background: rgba(148,163,184,0.1); color: #cbd5e1; border-color: rgba(148,163,184,0.25); }
+
     /* ─────────── BRACKET HISTORY (Liquipedia style) ─────────── */
     .bracket-history-wrap {
         padding: 8px 4px 24px;
+        --bk-line: rgba(148, 163, 184, 0.45);
+        --bk-line-w: 2px;
+        --bk-radius: 6px;
+        --bk-gap: 3rem;
+    }
+
+    /* ── Match card (rebuilt, no inline styles) ── */
+    .bracket-history-wrap .bracket-match {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+        transition: border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .bracket-history-wrap .bracket-match-link:hover .bracket-match {
+        border-color: rgba(99, 102, 241, 0.55);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
+        transform: translateY(-1px);
+    }
+    .bracket-history-wrap .bm-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        color: #cbd5e1;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .bracket-history-wrap .bm-row:last-child { border-bottom: none; }
+    .bracket-history-wrap .bm-team {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
+    .bracket-history-wrap .bm-score {
+        flex-shrink: 0;
+        min-width: 28px;
+        text-align: center;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.85rem;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #94a3b8;
+    }
+    .bracket-history-wrap .bm-row.is-winner {
+        background: linear-gradient(90deg, rgba(16, 185, 129, 0.12), transparent);
+    }
+    .bracket-history-wrap .bm-row.is-winner .bm-team { color: #6ee7b7; }
+    .bracket-history-wrap .bm-row.is-winner .bm-score {
+        background: rgba(16, 185, 129, 0.18);
+        color: #6ee7b7;
+    }
+    .bracket-history-wrap .bm-row.is-loser .bm-team { color: #64748b; }
+    .bracket-history-wrap .bm-row.is-loser .bm-score { opacity: 0.55; }
+    .bracket-history-wrap .bm-note {
+        padding: 6px 12px;
+        text-align: center;
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #93c5fd;
+        background: rgba(59, 130, 246, 0.08);
+        border-top: 1px solid rgba(59, 130, 246, 0.18);
     }
 
     /* Round title sebagai pill */
@@ -680,23 +741,7 @@
         align-items: center;
         margin-bottom: 0 !important;
     }
-    /* Match content tetap natural size, di-center di link wrapper */
-    .bracket-history-wrap .bracket-match {
-        position: relative;
-        z-index: 2;
-        width: 100%;
-        margin-bottom: 0 !important;
-    }
-    .bracket-history-wrap .bracket-match:hover {
-        border-color: rgba(99,102,241,0.5) !important;
-        box-shadow: 0 4px 14px rgba(99,102,241,0.2);
-        transform: translateY(-1px);
-    }
-
     /* ── Connector lines ── */
-    /* Variabel warna */
-    .bracket-history-wrap { --bk-line: rgba(99,102,241,0.45); --bk-line-win: rgba(16,185,129,0.6); }
-
     /* Garis masuk dari kiri (semua round kecuali round-first dan kolom juara 3) */
     .bracket-history-wrap .bracket-round:not(.bracket-round-first):not(.bracket-round-third) .bracket-match-link::before {
         content: "";
@@ -722,36 +767,16 @@
     /* Match ganjil (top of pair): horizontal kanan dari midpoint, lalu turun ke bottom edge (= merge point) */
     .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .match-list > .bracket-match-link:nth-child(odd)::after {
         top: 50%;
-        bottom: 0;
+        bottom: -1px;
         border-top: 2px solid var(--bk-line);
         border-right: 2px solid var(--bk-line);
-        border-top-right-radius: 8px;
     }
     /* Match genap (bottom of pair): horizontal kanan dari midpoint, lalu naik ke top edge (= merge point) */
     .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .match-list > .bracket-match-link:nth-child(even)::after {
-        top: 0;
+        top: -1px;
         bottom: 50%;
         border-bottom: 2px solid var(--bk-line);
         border-right: 2px solid var(--bk-line);
-        border-bottom-right-radius: 8px;
-    }
-
-    /* Highlight kalau match punya pemenang (winner) */
-    .bracket-history-wrap .bracket-match-link:has(.text-primary)::before {
-        background: var(--bk-line-win);
-        height: 3px;
-    }
-    .bracket-history-wrap .match-list > .bracket-match-link:has(.text-primary):nth-child(odd)::after {
-        border-top-color: var(--bk-line-win);
-        border-right-color: var(--bk-line-win);
-        border-top-width: 3px;
-        border-right-width: 3px;
-    }
-    .bracket-history-wrap .match-list > .bracket-match-link:has(.text-primary):nth-child(even)::after {
-        border-bottom-color: var(--bk-line-win);
-        border-right-color: var(--bk-line-win);
-        border-bottom-width: 3px;
-        border-right-width: 3px;
     }
 
     /* Pemisah visual: kolom Perebutan Juara 3 di luar bracket utama */
