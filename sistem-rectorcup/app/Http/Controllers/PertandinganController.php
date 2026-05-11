@@ -19,10 +19,9 @@ class PertandinganController extends Controller
 
         $selectedSport = request('sport_id');
 
-        // Menampilkan pertandingan yang sedang LIVE atau Terjadwal (Non-Tournament)
+        // Tampilkan semua match yang sedang live atau terjadwal (termasuk dari tournament).
         $query = Pertandingan::with(['teamA', 'teamB', 'sport', 'games'])
-            ->whereIn('status', ['scheduled', 'live'])
-            ->whereNull('tournament_id'); // Tampilkan yang mandiri saja di list utama
+            ->whereIn('status', ['live', 'scheduled']);
 
         if ($selectedSport && $selectedSport !== 'all') {
             $query->where('sport_id', $selectedSport);

@@ -224,7 +224,8 @@ class RectorCup2024Seeder extends Seeder
                 'score_a'       => $scoreA,
                 'score_b'       => $scoreB,
                 'winner_id'     => $winner?->id,
-                'status'        => $isFinished ? 'finished' : 'scheduled',
+                'status'        => 'finished', // data historis 2024, selalu finished
+                'selesai_pada'  => $this->waktu($m['date'], $time),
                 'lokasi'        => $m['location'] ?? $defaultLocation,
                 'keterangan'    => $category,
                 'round'         => $roundMap[$stage] ?? null,
