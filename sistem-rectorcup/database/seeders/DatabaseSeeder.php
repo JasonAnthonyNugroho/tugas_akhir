@@ -101,6 +101,7 @@ class DatabaseSeeder extends Seeder
         // Recap data turnamen historis
         $this->call([
             Mlbb2024Seeder::class,
+            RectorCup2024Seeder::class,
         ]);
     }
 }
