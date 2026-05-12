@@ -96,9 +96,9 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-4 d-flex">
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill mr-2">Filter</button>
-                    <a href="{{ route('history') }}" class="btn btn-outline-secondary w-100 rounded-pill">
+                <div class="col-md-4 d-flex align-items-center">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill mr-2" style="height: 42px;">Filter</button>
+                    <a href="{{ route('history') }}" class="btn btn-outline-secondary w-100 rounded-pill d-flex align-items-center justify-content-center" style="height: 42px;">
                         Reset
                     </a>
                 </div>
@@ -278,9 +278,53 @@
                             'teams' => $teams,
                             'results' => $results
                         ];
+
+                        // Gather Screenshots
+                        $screenshots = [];
+                        foreach($selectedTournament->pertandingans as $match) {
+                            if ($match->screenshot) {
+                                $screenshots[] = [
+                                    'title' => $match->babak . ' - Utama',
+                                    'url' => asset('storage/' . $match->screenshot)
+                                ];
+                            }
+                        }
+                        
+                        $gameScreenshots = \App\Models\MatchGame::whereIn('pertandingan_id', $selectedTournament->pertandingans->pluck('id'))
+                                            ->whereNotNull('screenshot')->with('pertandingan')->get();
+                        foreach($gameScreenshots as $gs) {
+                            $screenshots[] = [
+                                'title' => ($gs->pertandingan->babak ?? 'Match') . ' - Game ' . $gs->game_number,
+                                'url' => asset('storage/' . $gs->screenshot)
+                            ];
+                        }
                     @endphp
                     
                     <div id="tournament-bracket" class="liquipedia-bracket"></div>
+                </div>
+
+                {{-- Screenshot Gallery --}}
+                <div class="mt-4 pt-4 border-top" style="border-color: rgba(255,255,255,0.05) !important;">
+                    <h5 class="font-weight-bold text-white mb-4"><i class="bi bi-images text-primary mr-2"></i> Bukti Pertandingan</h5>
+                    @if(count($screenshots) > 0)
+                        <div class="row">
+                            @foreach($screenshots as $ss)
+                                <div class="col-6 col-md-4 col-lg-3 mb-4">
+                                    <div class="card bg-transparent border-0">
+                                        <a href="{{ $ss['url'] }}" target="_blank" class="d-block mb-2 shadow-sm transition-transform" style="border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                            <img src="{{ $ss['url'] }}" class="img-fluid w-100" style="aspect-ratio: 16/9; object-fit: cover; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" alt="Screenshot">
+                                        </a>
+                                        <div class="small text-muted text-truncate" title="{{ $ss['title'] }}">{{ $ss['title'] }}</div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-5 rounded" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1);">
+                            <i class="bi bi-camera text-muted h2 d-block mb-2 opacity-50"></i>
+                            <p class="text-muted small mb-0">Belum ada bukti foto atau screenshot pertandingan yang diunggah.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -611,10 +655,13 @@
     .jQBracket .team {
         background-color: rgba(15, 23, 42, 0.8) !important;
         color: #cbd5e1 !important;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     .jQBracket .team.win {
         color: #6ee7b7 !important;
+        border-color: rgba(16, 185, 129, 0.3);
     }
     .jQBracket .team.lose {
         color: #64748b !important;
@@ -623,25 +670,36 @@
         color: inherit !important;
         font-weight: 600;
         font-size: 0.82rem;
+        padding: 4px 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .jQBracket .team .score {
         color: #94a3b8 !important;
-        background: rgba(255, 255, 255, 0.04) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
         font-weight: 700;
         font-size: 0.85rem;
         text-align: center;
+        padding: 4px 0;
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
     }
     .jQBracket .team.win .score {
-        background: rgba(16, 185, 129, 0.18) !important;
+        background: rgba(16, 185, 129, 0.15) !important;
         color: #6ee7b7 !important;
+        border-left-color: rgba(16, 185, 129, 0.3);
     }
     .jQBracket .team.highlight {
-        background-color: rgba(99, 102, 241, 0.2) !important;
-        border-color: rgba(99, 102, 241, 0.55);
+        background-color: rgba(99, 102, 241, 0.25) !important;
+        border-color: rgba(99, 102, 241, 0.6);
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
     }
     .jQBracket .connector {
         border-color: rgba(148, 163, 184, 0.45) !important;
         border-width: 2px !important;
+    }
+    .jQBracket .connector.highlight {
+        border-color: #818cf8 !important;
     }
 </style>
 @endsection
@@ -655,7 +713,11 @@
 
         $('#tournament-bracket').bracket({
             init: bracketData,
-            skipConsolationRound: false
+            skipConsolationRound: false,
+            teamWidth: 220,     // Disesuaikan agar Pendidikan Bahasa Inggris pas
+            scoreWidth: 35,
+            matchMargin: 60,
+            roundMargin: 70
         });
         @endif
     });
