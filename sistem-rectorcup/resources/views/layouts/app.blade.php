@@ -380,7 +380,7 @@
                     </button>
                 </div>
                 <div class="col d-flex align-items-center">
-                    <div class="d-flex align-items-center ml-2 ml-lg-0">
+                    <a href="/" class="d-flex align-items-center ml-2 ml-lg-0 text-decoration-none">
                         <div class="bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center mr-3"
                             style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important;">
                             <i class="bi bi-trophy-fill text-white"></i>
@@ -389,7 +389,7 @@
                             style="letter-spacing: -1px; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                             RECTOR CUP
                         </h4>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-auto">
                     <div class="dropdown">
@@ -472,7 +472,6 @@
             </div>
         </div>
     </div>
-    @yield('scripts')
 
     @if(session('success') && !session('updated_id'))
         <script>
@@ -500,8 +499,9 @@
         </script>
     @endif
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    @yield('scripts')
 
     <script>
         $(document).ready(function () {

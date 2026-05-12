@@ -58,15 +58,14 @@
     <div class="mb-5">
         <div class="card filter-card p-4">
             <form action="{{ route('history') }}" method="GET" class="row align-items-center">
-                <div class="col-md-5 mb-3 mb-md-0">
+                <div class="col-md-4 mb-3 mb-md-0">
                     <div class="input-group modern-filter-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text bg-transparent">
                                 <i class="bi bi-calendar-event text-primary"></i>
                             </span>
                         </div>
-                        <select name="year" class="form-control" style="background: transparent;"
-                            onchange="this.form.submit()">
+                        <select name="year" class="form-control" style="background: transparent;">
                             <option value="all" {{ $selectedYear == 'all' ? 'selected' : '' }}>
                                 Semua Tahun
                             </option>
@@ -78,15 +77,14 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-5 mb-3 mb-md-0">
+                <div class="col-md-4 mb-3 mb-md-0">
                     <div class="input-group modern-filter-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text bg-transparent">
                                 <i class="bi bi-funnel text-primary"></i>
                             </span>
                         </div>
-                        <select name="sport_id" class="form-control" style="background: transparent;"
-                            onchange="this.form.submit()">
+                        <select name="sport_id" class="form-control" style="background: transparent;">
                             <option value="all" {{ $selectedSportId == 'all' ? 'selected' : '' }}>
                                 Semua Cabang Olahraga
                             </option>
@@ -98,8 +96,9 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <a href="{{ route('history') }}" class="btn btn-outline-secondary btn-block rounded-pill">
+                <div class="col-md-4 d-flex">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill mr-2">Filter</button>
+                    <a href="{{ route('history') }}" class="btn btn-outline-secondary w-100 rounded-pill">
                         Reset
                     </a>
                 </div>
@@ -217,91 +216,71 @@
 
                 {{-- Bracket View --}}
                 <div class="bracket-wrapper bracket-history-wrap overflow-auto pb-4">
-                    <div class="d-flex bracket-rounds-flex" style="min-width: max-content;">
-                        @php
-                            $maxRound = $selectedTournament->pertandingans->max('round');
-                        @endphp
+                    @php
+                        $teams = [];
+                        $results = [];
+                        $maxRound = $selectedTournament->pertandingans->where('match_number', '!=', 99)->max('round') ?? 1;
 
-                        @for($r = 1; $r <= $maxRound; $r++)
-                            @php
-                                $roundMatches = $selectedTournament->pertandingans->where('round', $r)->where('match_number', '!=', 99)->sortBy('match_number');
-                                $roundClasses = 'bracket-round';
-                                if ($r === 1)         $roundClasses .= ' bracket-round-first';
-                                if ($r === $maxRound) $roundClasses .= ' bracket-round-final';
-                            @endphp
-                            <div class="{{ $roundClasses }} mr-5" style="width: 280px;">
-                                <h5 class="text-center text-muted small font-weight-bold text-uppercase mb-4 bracket-round-title-h">
-                                    {{ $roundMatches->first()->babak ?? 'Babak ' . $r }}
-                                </h5>
-                                <div class="match-list d-flex flex-column justify-content-around h-100">
-                                    @foreach($roundMatches as $match)
-                                        @php
-                                            $labelParts = $match->custom_label ? preg_split('/\s+VS\s+/i', $match->custom_label) : null;
-                                            $leftName = $match->teamA?->name ?? ($labelParts[0] ?? 'TBD');
-                                            $rightName = $match->teamB?->name ?? ($labelParts[1] ?? 'TBD');
-                                        @endphp
-                                        @php
-                                            $aWin = $match->winner_id && $match->winner_id == $match->team_a_id;
-                                            $bWin = $match->winner_id && $match->winner_id == $match->team_b_id;
-                                        @endphp
-                                        <a href="{{ route('pertandingan.show', $match->id) }}" class="bracket-match-link text-decoration-none">
-                                            <div class="bracket-match">
-                                                <div class="bm-row {{ $aWin ? 'is-winner' : ($match->winner_id ? 'is-loser' : '') }}">
-                                                    <span class="bm-team">{{ $leftName }}</span>
-                                                    <span class="bm-score">{{ $match->score_a ?? '-' }}</span>
-                                                </div>
-                                                <div class="bm-row {{ $bWin ? 'is-winner' : ($match->winner_id ? 'is-loser' : '') }}">
-                                                    <span class="bm-team">{{ $rightName }}</span>
-                                                    <span class="bm-score">{{ $match->score_b ?? '-' }}</span>
-                                                </div>
-                                                @if($match->keterangan)
-                                                    <div class="bm-note">{{ $match->keterangan }}</div>
-                                                @endif
-                                            </div>
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endfor
+                        // Get Round 1 matches to build the teams array
+                        $round1Matches = $selectedTournament->pertandingans->where('round', 1)->where('match_number', '!=', 99)->sortBy('match_number');
+                        
+                        foreach ($round1Matches as $match) {
+                            $labelParts = $match->custom_label ? preg_split('/\s+VS\s+/i', $match->custom_label) : null;
+                            $leftName = $match->teamA?->name ?? ($labelParts[0] ?? 'TBD');
+                            $rightName = $match->teamB?->name ?? ($labelParts[1] ?? 'TBD');
+                            $teams[] = [$leftName, $rightName];
+                        }
 
-                        {{-- Kolom Khusus Perebutan Juara 3 --}}
-                        @php
-                            $thirdPlaceMatch = $selectedTournament->pertandingans->where('match_number', 99)->first();
-                        @endphp
-                        @if($thirdPlaceMatch)
-                            @php
-                                $thirdLabelParts = $thirdPlaceMatch->custom_label ? preg_split('/\s+VS\s+/i', $thirdPlaceMatch->custom_label) : null;
-                                $thirdLeft = $thirdPlaceMatch->teamA?->name ?? ($thirdLabelParts[0] ?? 'TBD');
-                                $thirdRight = $thirdPlaceMatch->teamB?->name ?? ($thirdLabelParts[1] ?? 'TBD');
-                            @endphp
-                            <div class="bracket-round bracket-round-third mr-5" style="width: 280px;">
-                                <h5 class="text-center text-muted small font-weight-bold text-uppercase mb-4 bracket-round-title-h bracket-round-title-third">
-                                    <i class="bi bi-award-fill mr-1"></i>{{ $thirdPlaceMatch->babak }}
-                                </h5>
-                                <div class="match-list d-flex flex-column justify-content-center h-100">
-                                    @php
-                                        $t3aWin = $thirdPlaceMatch->winner_id && $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_a_id;
-                                        $t3bWin = $thirdPlaceMatch->winner_id && $thirdPlaceMatch->winner_id == $thirdPlaceMatch->team_b_id;
-                                    @endphp
-                                    <a href="{{ route('pertandingan.show', $thirdPlaceMatch->id) }}" class="bracket-match-link text-decoration-none">
-                                        <div class="bracket-match">
-                                            <div class="bm-row {{ $t3aWin ? 'is-winner' : ($thirdPlaceMatch->winner_id ? 'is-loser' : '') }}">
-                                                <span class="bm-team">{{ $thirdLeft }}</span>
-                                                <span class="bm-score">{{ $thirdPlaceMatch->score_a ?? '-' }}</span>
-                                            </div>
-                                            <div class="bm-row {{ $t3bWin ? 'is-winner' : ($thirdPlaceMatch->winner_id ? 'is-loser' : '') }}">
-                                                <span class="bm-team">{{ $thirdRight }}</span>
-                                                <span class="bm-score">{{ $thirdPlaceMatch->score_b ?? '-' }}</span>
-                                            </div>
-                                            @if($thirdPlaceMatch->keterangan)
-                                                <div class="bm-note">{{ $thirdPlaceMatch->keterangan }}</div>
-                                            @endif
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
+                        // Determine the closest power of 2 for pairs
+                        $numPairs = count($teams);
+                        if ($numPairs > 0) {
+                            $powerOfTwoPairs = pow(2, ceil(log($numPairs, 2)));
+                            // Pad the rest with null pairs (byes) to satisfy jquery-bracket's power-of-2 requirement
+                            while (count($teams) < $powerOfTwoPairs) {
+                                $teams[] = [null, null];
+                            }
+                        }
+
+                        // Build the results array
+                        for ($r = 1; $r <= $maxRound; $r++) {
+                            $roundMatches = $selectedTournament->pertandingans->where('round', $r)->where('match_number', '!=', 99)->sortBy('match_number');
+                            $roundResults = [];
+                            
+                            foreach ($roundMatches as $match) {
+                                $scoreA = $match->score_a !== null ? (int)$match->score_a : null;
+                                $scoreB = $match->score_b !== null ? (int)$match->score_b : null;
+                                $roundResults[] = [$scoreA, $scoreB];
+                            }
+                            
+                            $results[] = $roundResults;
+                        }
+
+                        // Pad results array to the required number of rounds
+                        $requiredRounds = count($teams) > 0 ? log(count($teams) * 2, 2) : 0;
+                        while (count($results) < $requiredRounds) {
+                            $results[] = [];
+                        }
+
+                        // Handle 3rd place match if it exists
+                        $thirdPlaceMatch = $selectedTournament->pertandingans->where('match_number', 99)->first();
+                        if ($thirdPlaceMatch && count($results) > 0) {
+                            $scoreA = $thirdPlaceMatch->score_a !== null ? (int)$thirdPlaceMatch->score_a : null;
+                            $scoreB = $thirdPlaceMatch->score_b !== null ? (int)$thirdPlaceMatch->score_b : null;
+                            $lastRoundIndex = count($results) - 1;
+                            
+                            if (empty($results[$lastRoundIndex])) {
+                                $results[$lastRoundIndex][] = [null, null];
+                            }
+                            $results[$lastRoundIndex][] = [$scoreA, $scoreB];
+                        }
+
+                        $bracketData = [
+                            'teams' => $teams,
+                            'results' => $results
+                        ];
+                    @endphp
+                    
+                    <div id="tournament-bracket" class="liquipedia-bracket"></div>
                 </div>
             </div>
         </div>
@@ -435,6 +414,7 @@
 @endsection
 
 @section('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-bracket@0.11.1/dist/jquery.bracket.min.css">
 <style>
     /* ── Podium row ── */
     .podium-row {
@@ -621,184 +601,63 @@
     .status-finished{ background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
     .status-upcoming{ background: rgba(148,163,184,0.1); color: #cbd5e1; border-color: rgba(148,163,184,0.25); }
 
-    /* ─────────── BRACKET HISTORY (Liquipedia style) ─────────── */
+    /* ─────────── JQUERY BRACKET OVERRIDE (Liquipedia style) ─────────── */
     .bracket-history-wrap {
-        padding: 8px 4px 24px;
-        --bk-line: rgba(148, 163, 184, 0.45);
-        --bk-line-w: 2px;
-        --bk-radius: 6px;
-        --bk-gap: 3rem;
+        padding: 20px;
     }
-
-    /* ── Match card (rebuilt, no inline styles) ── */
-    .bracket-history-wrap .bracket-match {
-        position: relative;
-        z-index: 2;
-        width: 100%;
-        background: rgba(15, 23, 42, 0.55);
+    .jQBracket {
+        font-family: 'Inter', sans-serif;
+    }
+    .jQBracket .team {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        color: #cbd5e1 !important;
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 10px;
-        overflow: hidden;
-        transition: border-color .2s, box-shadow .2s, transform .2s;
     }
-    .bracket-history-wrap .bracket-match-link:hover .bracket-match {
-        border-color: rgba(99, 102, 241, 0.55);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
-        transform: translateY(-1px);
+    .jQBracket .team.win {
+        color: #6ee7b7 !important;
     }
-    .bracket-history-wrap .bm-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 10px 12px;
-        font-size: 0.82rem;
-        color: #cbd5e1;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    .jQBracket .team.lose {
+        color: #64748b !important;
     }
-    .bracket-history-wrap .bm-row:last-child { border-bottom: none; }
-    .bracket-history-wrap .bm-team {
+    .jQBracket .team .label {
+        color: inherit !important;
         font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-        min-width: 0;
+        font-size: 0.82rem;
     }
-    .bracket-history-wrap .bm-score {
-        flex-shrink: 0;
-        min-width: 28px;
-        text-align: center;
+    .jQBracket .team .score {
+        color: #94a3b8 !important;
+        background: rgba(255, 255, 255, 0.04) !important;
         font-weight: 700;
-        font-variant-numeric: tabular-nums;
         font-size: 0.85rem;
-        padding: 2px 8px;
-        border-radius: 5px;
-        background: rgba(255, 255, 255, 0.04);
-        color: #94a3b8;
-    }
-    .bracket-history-wrap .bm-row.is-winner {
-        background: linear-gradient(90deg, rgba(16, 185, 129, 0.12), transparent);
-    }
-    .bracket-history-wrap .bm-row.is-winner .bm-team { color: #6ee7b7; }
-    .bracket-history-wrap .bm-row.is-winner .bm-score {
-        background: rgba(16, 185, 129, 0.18);
-        color: #6ee7b7;
-    }
-    .bracket-history-wrap .bm-row.is-loser .bm-team { color: #64748b; }
-    .bracket-history-wrap .bm-row.is-loser .bm-score { opacity: 0.55; }
-    .bracket-history-wrap .bm-note {
-        padding: 6px 12px;
         text-align: center;
-        font-size: 0.65rem;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: #93c5fd;
-        background: rgba(59, 130, 246, 0.08);
-        border-top: 1px solid rgba(59, 130, 246, 0.18);
     }
-
-    /* Round title sebagai pill */
-    .bracket-history-wrap .bracket-round-title-h {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.12));
-        border: 1px solid rgba(99,102,241,0.3);
-        color: #c7d2fe !important;
-        padding: 7px 14px;
-        border-radius: 999px;
-        letter-spacing: 0.1em;
-        margin-bottom: 18px !important;
-        box-shadow: 0 2px 8px rgba(99,102,241,0.15);
-        align-self: center;
+    .jQBracket .team.win .score {
+        background: rgba(16, 185, 129, 0.18) !important;
+        color: #6ee7b7 !important;
     }
-    .bracket-history-wrap .bracket-round-title-third {
-        background: linear-gradient(135deg, rgba(217,119,6,0.2), rgba(120,53,15,0.15));
-        border-color: rgba(217,119,6,0.4);
-        color: #fbbf24 !important;
+    .jQBracket .team.highlight {
+        background-color: rgba(99, 102, 241, 0.2) !important;
+        border-color: rgba(99, 102, 241, 0.55);
     }
-
-    /* Round container */
-    .bracket-history-wrap .bracket-round {
-        display: flex;
-        flex-direction: column;
-        min-height: 100%;
-    }
-    /* Match list = full height kolom, override bootstrap justify-around dengan flex:1 child */
-    .bracket-history-wrap .match-list {
-        position: relative;
-        flex: 1;
-        justify-content: stretch !important;
-    }
-
-    /* Setiap match-link mengambil tinggi yang sama (flex 1) */
-    .bracket-history-wrap .bracket-match-link {
-        position: relative;
-        display: flex !important;
-        flex: 1 1 0;
-        align-items: center;
-        margin-bottom: 0 !important;
-    }
-    /* ── Connector lines ── */
-    /* Garis masuk dari kiri (semua round kecuali round-first dan kolom juara 3) */
-    .bracket-history-wrap .bracket-round:not(.bracket-round-first):not(.bracket-round-third) .bracket-match-link::before {
-        content: "";
-        position: absolute;
-        left: -3rem;
-        top: 50%;
-        width: 3rem;
-        height: 2px;
-        background: var(--bk-line);
-        z-index: 1;
-    }
-
-    /* L-shape keluar ke kanan: pakai border pada area dari midpoint match → edge link wrapper.
-       Karena setiap link tinggi sama (flex 1), edge link = midpoint pasangan match. */
-    .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .bracket-match-link::after {
-        content: "";
-        position: absolute;
-        right: -3rem;
-        width: 3rem;
-        background: transparent;
-        z-index: 1;
-    }
-    /* Match ganjil (top of pair): horizontal kanan dari midpoint, lalu turun ke bottom edge (= merge point) */
-    .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .match-list > .bracket-match-link:nth-child(odd)::after {
-        top: 50%;
-        bottom: -1px;
-        border-top: 2px solid var(--bk-line);
-        border-right: 2px solid var(--bk-line);
-    }
-    /* Match genap (bottom of pair): horizontal kanan dari midpoint, lalu naik ke top edge (= merge point) */
-    .bracket-history-wrap .bracket-round:not(.bracket-round-final):not(.bracket-round-third) .match-list > .bracket-match-link:nth-child(even)::after {
-        top: -1px;
-        bottom: 50%;
-        border-bottom: 2px solid var(--bk-line);
-        border-right: 2px solid var(--bk-line);
-    }
-
-    /* Pemisah visual: kolom Perebutan Juara 3 di luar bracket utama */
-    .bracket-history-wrap .bracket-round-third {
-        margin-left: 2.5rem !important;
-        padding-left: 1.5rem;
-        border-left: 1px dashed rgba(255,255,255,0.1);
-        position: relative;
-    }
-    .bracket-history-wrap .bracket-round-third::before {
-        content: "Bonus Match";
-        position: absolute;
-        left: 1.5rem;
-        top: -8px;
-        background: rgba(217,119,6,0.15);
-        color: #fbbf24;
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        padding: 2px 8px;
-        border-radius: 4px;
-        text-transform: uppercase;
+    .jQBracket .connector {
+        border-color: rgba(148, 163, 184, 0.45) !important;
+        border-width: 2px !important;
     }
 </style>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/jquery-bracket@0.11.1/dist/jquery.bracket.min.js"></script>
+<script>
+    $(document).ready(function() {
+        @if($selectedTournament && count($selectedTournament->pertandingans) > 0)
+        var bracketData = {!! json_encode($bracketData ?? ['teams' => [], 'results' => []]) !!};
+
+        $('#tournament-bracket').bracket({
+            init: bracketData,
+            skipConsolationRound: false
+        });
+        @endif
+    });
+</script>
 @endsection
