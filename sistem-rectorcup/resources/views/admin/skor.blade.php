@@ -139,23 +139,10 @@
                                         @for($i = 1; $i <= 3; $i++)
                                             @php $game = $p->games->where('game_number', $i)->first(); @endphp
                                             <div class="row align-items-center mb-3">
-                                                <div class="col-md-2">
+                                                <div class="col-md-3">
                                                     <span class="small font-weight-bold text-muted">Game {{ $i }}</span>
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <div class="input-group input-group-sm">
-                                                        <input type="number" name="game_scores[{{ $i }}][a]"
-                                                            class="form-control bg-dark border-secondary text-white text-center"
-                                                            placeholder="A" value="{{ $game->score_a ?? 0 }}">
-                                                        <div class="input-group-append"><span
-                                                                class="input-group-text bg-transparent border-secondary text-muted">:</span>
-                                                        </div>
-                                                        <input type="number" name="game_scores[{{ $i }}][b]"
-                                                            class="form-control bg-dark border-secondary text-white text-center"
-                                                            placeholder="B" value="{{ $game->score_b ?? 0 }}">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
+                                                <div class="col-md-9">
                                                     <div class="custom-file custom-file-sm">
                                                         <input type="file" name="game_screenshots[{{ $i }}]" class="custom-file-input"
                                                             id="game_ss{{ $p->id }}_{{ $i }}">
