@@ -24,8 +24,8 @@ class LoginController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // Kirim notifikasi sukses ke session
-            return redirect()->intended('/admin')->with('success', 'Selamat Datang! Anda berhasil login sebagai Panitia.');
+            // Kirim redirect tanpa pesan
+            return redirect()->intended('/admin');
         }
 
         // Jika gagal, kembali dengan pesan error

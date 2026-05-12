@@ -74,6 +74,7 @@ class CustomBracketController extends Controller
             'start_date'         => 'required|date',
             'end_date'           => 'required|date|after_or_equal:start_date',
             'external_score_url' => 'nullable|url|max:500',
+            'format_tanding'     => 'nullable|in:BO1,BO3',
         ]);
 
         $sport        = Sport::find($request->sport_id);
@@ -89,6 +90,7 @@ class CustomBracketController extends Controller
             'startDate'        => $request->start_date,
             'endDate'          => $request->end_date,
             'externalScoreUrl' => $request->external_score_url,
+            'formatTanding'    => $request->format_tanding ?? 'BO1',
             'sport'            => $sport,
             'selectedTeams'    => $selectedTeams,
             'teamIds'          => $request->team_ids,
@@ -109,6 +111,7 @@ class CustomBracketController extends Controller
             'start_date'         => 'required|date',
             'end_date'           => 'required|date|after_or_equal:start_date',
             'external_score_url' => 'nullable|url|max:500',
+            'format_tanding'     => 'nullable|in:BO1,BO3',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -130,9 +133,10 @@ class CustomBracketController extends Controller
 
             $bracketSize = $request->bracket_size;
             $numRounds = log($bracketSize, 2);
-            
+            $formatTanding = in_array($request->format_tanding, ['BO1', 'BO3']) ? $request->format_tanding : 'BO1';
+
             // Generate matches dengan arrangement yang sudah di-set
-            $this->createBracketMatches($tournament, $request->sport_id, $bracketSize, $numRounds, $request->arrangement, $request->keterangan);
+            $this->createBracketMatches($tournament, $request->sport_id, $bracketSize, $numRounds, $request->arrangement, $request->keterangan, $formatTanding);
 
             return redirect()->route('admin.tournament.bracket.view', $tournament)
                 ->with('success', 'Custom bracket berhasil dibuat!');
@@ -266,7 +270,7 @@ class CustomBracketController extends Controller
     /**
      * Create actual matches di database dengan distribusi tanggal
      */
-    private function createBracketMatches($tournament, $sportId, $bracketSize, $numRounds, $arrangement, $keterangan)
+    private function createBracketMatches($tournament, $sportId, $bracketSize, $numRounds, $arrangement, $keterangan, $formatTanding = 'BO1')
     {
         $roundMatches = [];
         
@@ -306,6 +310,7 @@ class CustomBracketController extends Controller
                     'next_match_id' => $nextMatch ? $nextMatch->id : null,
                     'status' => 'scheduled',
                     'babak' => $this->getBabakName($round, $numRounds),
+                    'format_tanding' => $formatTanding,
                     'waktu_tanding' => $matchDateTime,
                     'match_date' => $matchDateTime,
                     'lokasi' => 'TBA',
@@ -337,6 +342,7 @@ class CustomBracketController extends Controller
                 'next_match_id' => null,
                 'status' => 'scheduled',
                 'babak' => 'Perebutan Juara 3',
+                'format_tanding' => $formatTanding,
                 'waktu_tanding' => now()->addDays($numRounds),
                 'lokasi' => 'TBA',
                 'keterangan' => $keterangan,

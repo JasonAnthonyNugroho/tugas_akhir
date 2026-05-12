@@ -405,17 +405,12 @@
                         </button>
                         <div class="dropdown-menu dropdown-menu-right mt-2 shadow-lg border-0"
                             style="background: var(--card-bg); border-radius: 16px; min-width: 200px;">
-                            @auth
-                                <div class="px-4 py-3 border-bottom border-secondary mb-2">
-                                    <p class="small text-muted mb-0">Signed in as</p>
-                                    <p class="font-weight-bold mb-0 text-white">{{ Auth::user()->name }}</p>
-                                </div>
-                                <a class="dropdown-item py-2 px-4 d-flex align-items-center text-white"
-                                    href="{{ route('admin.index') }}">
-                                    <i class="bi bi-speedometer2 mr-3 text-white"></i> Admin Dashboard
-                                </a>
-                                <div class="dropdown-divider border-secondary"></div>
-                                <form action="{{ route('logout') }}" method="POST">
+                                @auth
+                                    <div class="px-4 py-3 border-bottom border-secondary mb-2">
+                                        <p class="small text-muted mb-0">Signed in as</p>
+                                        <p class="font-weight-bold mb-0 text-white">{{ Auth::user()->name }}</p>
+                                    </div>
+                                    <form action="{{ route('logout') }}" method="POST">
                                     @csrf
                                     <button class="dropdown-item py-2 px-4 d-flex align-items-center text-danger">
                                         <i class="bi bi-box-arrow-right mr-3"></i> Logout
@@ -434,6 +429,7 @@
         </div>
 
         <div class="row no-gutters">
+            @if(!request()->routeIs('login'))
             <!-- Modern Sidebar -->
             <div class="col-lg-2 sidebar shadow-lg" id="sidebarMenu">
                 <div class="nav flex-column nav-pills">
@@ -466,9 +462,10 @@
                     @endauth
                 </div>
             </div>
+            @endif
 
             <!-- Content Area -->
-            <div class="col-lg-10 p-4 min-vh-100">
+            <div class="{{ request()->routeIs('login') ? 'col-12' : 'col-lg-10' }} p-4 min-vh-100">
                 <div class="container-fluid">
                     @yield('content')
                 </div>

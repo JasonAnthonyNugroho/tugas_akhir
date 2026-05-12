@@ -13,8 +13,8 @@
             {{-- Primary CTA: Custom Bracket Builder (recommended path) --}}
             <a href="{{ route('admin.tournament.bracket.builder') }}"
                class="btn btn-primary-action">
-                <i class="bi bi-magic mr-2"></i>
-                <span>Buat Bracket</span>
+                <i class="bi bi-diagram-3 mr-2"></i>
+                <span>Bracket Custom</span>
             </a>
 
             {{-- Secondary actions --}}
@@ -242,6 +242,19 @@
                                 </select>
                             </div>
                             <div class="col-md-12 mb-3">
+                                <label class="dash-label"><i class="bi bi-controller mr-1"></i> Format Pertandingan <span class="text-danger">*</span></label>
+                                <div class="d-flex" style="gap: 12px;">
+                                    <label class="format-pill flex-fill">
+                                        <input type="radio" name="format_tanding" value="BO1" checked>
+                                        <span><strong>BO1</strong><small>Single match / Best of 1</small></span>
+                                    </label>
+                                    <label class="format-pill flex-fill">
+                                        <input type="radio" name="format_tanding" value="BO3">
+                                        <span><strong>BO3</strong><small>Best of 3 (mis. MLBB)</small></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mb-3">
                                 <label class="dash-label">Keterangan Bracket</label>
                                 <input type="text" name="keterangan" class="dash-input"
                                        placeholder="Contoh: Basket Putra, Badminton Ganda Putra">
@@ -267,11 +280,6 @@
                             <i class="bi bi-people-fill"></i>
                             <span>Tim Peserta</span>
                             <span class="dash-section-hint">Minimal 2 tim, atau biarkan kosong untuk bracket manual</span>
-                        </div>
-
-                        <div class="dash-info-banner">
-                            <i class="bi bi-info-circle-fill mr-2"></i>
-                            <span><strong>Tips:</strong> Lewati pemilihan tim ini jika ingin bracket kosong (input manual nanti).</span>
                         </div>
 
                         <div class="dash-team-picker">
@@ -418,13 +426,26 @@
                             </div>
                         </div>
 
-                        {{-- Section: Catatan --}}
+                        {{-- Section: Format & Catatan --}}
                         <div class="dash-form-section">
                             <div class="dash-section-title">
                                 <i class="bi bi-card-text"></i>
-                                <span>Catatan Tambahan</span>
+                                <span>Format & Catatan</span>
                             </div>
                             <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="dash-label"><i class="bi bi-controller mr-1"></i> Format Pertandingan <span class="text-danger">*</span></label>
+                                    <div class="d-flex" style="gap: 12px;">
+                                        <label class="format-pill flex-fill">
+                                            <input type="radio" name="format_tanding" value="BO1" checked>
+                                            <span><strong>BO1</strong><small>Single match / Best of 1</small></span>
+                                        </label>
+                                        <label class="format-pill flex-fill">
+                                            <input type="radio" name="format_tanding" value="BO3">
+                                            <span><strong>BO3</strong><small>Best of 3 (mis. MLBB)</small></span>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div class="col-md-12">
                                     <label class="dash-label">Keterangan Pertandingan</label>
                                     <input type="text" name="keterangan" class="dash-input"
@@ -846,6 +867,29 @@
         box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
     }
     .dash-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Format pill radio (BO1/BO3) */
+    .format-pill {
+        position: relative;
+        display: block;
+        padding: 12px 14px;
+        background: rgba(15,23,42,0.6);
+        border: 1px solid rgba(148,163,184,0.2);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all .2s;
+        margin: 0;
+    }
+    .format-pill input { position: absolute; opacity: 0; pointer-events: none; }
+    .format-pill span { display: flex; flex-direction: column; gap: 2px; color: #cbd5e1; }
+    .format-pill span strong { font-size: 0.95rem; color: #fff; letter-spacing: 0.05em; }
+    .format-pill span small { font-size: 0.7rem; color: #64748b; }
+    .format-pill:hover { border-color: rgba(99,102,241,0.4); }
+    .format-pill:has(input:checked) {
+        border-color: #6366f1;
+        background: rgba(99,102,241,0.12);
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
     select.dash-input {
         appearance: none;
         background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%2394a3b8' d='M8 11.5L3 6h10z'/%3e%3c/svg%3e");

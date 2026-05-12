@@ -57,9 +57,7 @@ class DatabaseSeeder extends Seeder
             'Informatika',
             'Sistem Informasi',
             'Biologi',
-            'Teknologi Pangan',
             'Pendidikan Bahasa Inggris',
-            'Studi Humanitas',
         ];
 
         // Tim Khusus Battle Royale / cabang yang melibatkan semua prodi (mis. PUBG Mobile, Catur)

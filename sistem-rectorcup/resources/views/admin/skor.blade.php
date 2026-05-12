@@ -60,15 +60,17 @@
                                                 (Battle Royale)</label>
                                             <div class="d-flex justify-content-center align-items-center">
                                                 <button type="button"
-                                                    class="btn btn-outline-secondary btn-lg rounded-circle mr-3 score-btn"
-                                                    onclick="decrementScore('score_a_{{ $p->id }}')">
+                                                    class="btn btn-outline-primary btn-lg rounded-circle mr-3 score-btn score-btn-down"
+                                                    data-for="score_a_{{ $p->id }}"
+                                                    onclick="decrementScore('score_a_{{ $p->id }}')"
+                                                    @if($p->score_a <= 0) disabled @endif>
                                                     <i class="bi bi-dash-lg"></i>
                                                 </button>
                                                 <input type="number" name="score_a" id="score_a_{{ $p->id }}" data-match-id="{{ $p->id }}"
                                                     class="form-control form-control-lg text-center font-weight-bold text-white bg-transparent border-0 p-0"
                                                     style="font-size: 3.5rem; width: 100px; height: auto;" value="{{ $p->score_a }}">
                                                 <button type="button"
-                                                    class="btn btn-outline-primary btn-lg rounded-circle ml-3 score-btn"
+                                                    class="btn btn-outline-primary btn-lg rounded-circle ml-3 score-btn score-btn-up"
                                                     onclick="incrementScore('score_a_{{ $p->id }}')">
                                                     <i class="bi bi-plus-lg"></i>
                                                 </button>
@@ -84,7 +86,7 @@
                                                     class="small font-weight-bold text-muted text-uppercase mb-3 d-block text-truncate">{{ $p->teamA?->name ?? 'TBD' }}</label>
                                                 <div class="d-flex flex-column align-items-center">
                                                     <button type="button"
-                                                        class="btn btn-outline-primary btn-sm rounded-pill mb-2 w-100 score-btn"
+                                                        class="btn btn-outline-primary btn-sm rounded-pill mb-2 w-100 score-btn score-btn-up"
                                                         onclick="incrementScore('score_a_{{ $p->id }}')">
                                                         <i class="bi bi-chevron-up"></i>
                                                     </button>
@@ -92,8 +94,10 @@
                                                         class="form-control form-control-lg text-center font-weight-bold text-white bg-transparent border-0 p-0"
                                                         style="font-size: 3rem; height: auto;" value="{{ $p->score_a }}">
                                                     <button type="button"
-                                                        class="btn btn-outline-secondary btn-sm rounded-pill mt-2 w-100 score-btn"
-                                                        onclick="decrementScore('score_a_{{ $p->id }}')">
+                                                        class="btn btn-outline-primary btn-sm rounded-pill mt-2 w-100 score-btn score-btn-down"
+                                                        data-for="score_a_{{ $p->id }}"
+                                                        onclick="decrementScore('score_a_{{ $p->id }}')"
+                                                        @if($p->score_a <= 0) disabled @endif>
                                                         <i class="bi bi-chevron-down"></i>
                                                     </button>
                                                 </div>
@@ -106,7 +110,7 @@
                                                     class="small font-weight-bold text-muted text-uppercase mb-3 d-block text-truncate">{{ $p->teamB?->name ?? 'TBD' }}</label>
                                                 <div class="d-flex flex-column align-items-center">
                                                     <button type="button"
-                                                        class="btn btn-outline-primary btn-sm rounded-pill mb-2 w-100 score-btn"
+                                                        class="btn btn-outline-primary btn-sm rounded-pill mb-2 w-100 score-btn score-btn-up"
                                                         onclick="incrementScore('score_b_{{ $p->id }}')">
                                                         <i class="bi bi-chevron-up"></i>
                                                     </button>
@@ -114,8 +118,10 @@
                                                         class="form-control form-control-lg text-center font-weight-bold text-white bg-transparent border-0 p-0"
                                                         style="font-size: 3rem; height: auto;" value="{{ $p->score_b }}">
                                                     <button type="button"
-                                                        class="btn btn-outline-secondary btn-sm rounded-pill mt-2 w-100 score-btn"
-                                                        onclick="decrementScore('score_b_{{ $p->id }}')">
+                                                        class="btn btn-outline-primary btn-sm rounded-pill mt-2 w-100 score-btn score-btn-down"
+                                                        data-for="score_b_{{ $p->id }}"
+                                                        onclick="decrementScore('score_b_{{ $p->id }}')"
+                                                        @if($p->score_b <= 0) disabled @endif>
                                                         <i class="bi bi-chevron-down"></i>
                                                     </button>
                                                 </div>
@@ -124,8 +130,8 @@
                                     @endif
                                 </div>
 
-                                {{-- BO3 Games Section (For MLBB, etc.) --}}
-                                @if(str_contains(strtolower($p->sport->nama_sport ?? ''), 'mobile legends') || str_contains(strtolower($p->sport->nama_sport ?? ''), 'mlbb'))
+                                {{-- BO3 Games Section (tampil hanya jika format_tanding = BO3) --}}
+                                @if(($p->format_tanding ?? '') === 'BO3')
                                     <div class="mb-4 p-3 rounded-lg"
                                         style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
                                         <h6 class="small font-weight-bold text-primary text-uppercase mb-3"><i
@@ -399,6 +405,14 @@
             transform: scale(0.9);
         }
 
+        .score-btn:disabled {
+            color: #6c757d !important;
+            border-color: #6c757d !important;
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: transparent !important;
+        }
+
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -410,9 +424,19 @@
     </style>
 
     <script>
+        function syncDownButton(id) {
+            const input = document.getElementById(id);
+            if (!input) return;
+            const val = parseInt(input.value || 0);
+            document.querySelectorAll(`.score-btn-down[data-for="${id}"]`).forEach(btn => {
+                btn.disabled = val <= 0;
+            });
+        }
+
         function incrementScore(id) {
             const input = document.getElementById(id);
             input.value = parseInt(input.value || 0) + 1;
+            syncDownButton(id);
         }
 
         function decrementScore(id) {
@@ -421,7 +445,15 @@
             if (val > 0) {
                 input.value = val - 1;
             }
+            syncDownButton(id);
         }
+
+        // Sinkron saat user mengetik langsung di input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input[name="score_a"], input[name="score_b"]').forEach(inp => {
+                inp.addEventListener('input', () => syncDownButton(inp.id));
+            });
+        });
 
         // Laravel Reverb Real-time Implementation for Admin Skor
         document.addEventListener('DOMContentLoaded', function() {

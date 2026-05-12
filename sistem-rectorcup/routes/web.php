@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PertandinganController;
 use App\Http\Controllers\CustomBracketController;
+use App\Http\Middleware\PreventBackHistory;
 use Illuminate\Support\Facades\Route;
 
 // Jalur Publik (Mahasiswa)
@@ -12,12 +13,14 @@ Route::get('/pertandingan/{pertandingan}', [PertandinganController::class, 'show
 Route::get('/tournament/{tournament}/bracket', [CustomBracketController::class, 'publicBracket'])->name('tournament.public.bracket');
 
 // Jalur Autentikasi
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
+Route::middleware(['guest', PreventBackHistory::class])->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
+});
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Jalur Khusus (Panitia)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     Route::get('/admin', [PertandinganController::class, 'adminDashboard'])->name('admin.index');
     Route::get('/admin/skor', [PertandinganController::class, 'manageScore'])->name('admin.skor');
     Route::post('/admin/store', [PertandinganController::class, 'store'])->name('pertandingan.store');

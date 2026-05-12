@@ -100,6 +100,37 @@
             </div>
         </div>
 
+        {{-- ===== Section 2b: Format Pertandingan (BO1/BO3) ===== --}}
+        <div class="bb-section mb-4">
+            <div class="bb-section-header">
+                <div class="bb-section-icon"><i class="bi bi-controller"></i></div>
+                <div>
+                    <h6 class="text-white font-weight-bold mb-0">Format Pertandingan</h6>
+                    <small class="text-muted">Berlaku untuk <strong>semua match</strong> di bracket ini</small>
+                </div>
+            </div>
+            <div class="bb-section-body">
+                <div class="size-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <label class="size-card">
+                        <input type="radio" name="format_tanding" value="BO1" checked required>
+                        <div class="size-card-inner">
+                            <div class="size-num">BO1</div>
+                            <div class="size-label">Best of 1</div>
+                            <div class="size-desc">Satu match per ronde (skor tunggal)</div>
+                        </div>
+                    </label>
+                    <label class="size-card">
+                        <input type="radio" name="format_tanding" value="BO3" required>
+                        <div class="size-card-inner">
+                            <div class="size-num">BO3</div>
+                            <div class="size-label">Best of 3</div>
+                            <div class="size-desc">3 game per match (mis. MLBB)</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
         {{-- ===== Section 3: Bracket Size (card visual) ===== --}}
         <div class="bb-section mb-4">
             <div class="bb-section-header">

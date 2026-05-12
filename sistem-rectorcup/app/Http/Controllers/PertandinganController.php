@@ -234,6 +234,7 @@ class PertandinganController extends Controller
             'waktu_tanding' => $request->waktu,
             'lokasi' => $request->lokasi,
             'keterangan' => $request->keterangan,
+            'format_tanding' => in_array($request->format_tanding, ['BO1', 'BO3']) ? $request->format_tanding : 'BO1',
             'status' => 'scheduled',
         ]);
 
@@ -437,11 +438,13 @@ class PertandinganController extends Controller
             'keterangan' => 'nullable|string|max:255',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'format_tanding' => 'nullable|in:BO1,BO3',
         ]);
 
         return DB::transaction(function () use ($request) {
             $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now();
             $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->addDays(7);
+            $formatTanding = in_array($request->format_tanding, ['BO1', 'BO3']) ? $request->format_tanding : 'BO1';
             
             $tournament = Tournament::create([
                 'name' => $request->tournament_name,
@@ -508,6 +511,7 @@ class PertandinganController extends Controller
                         'next_match_id' => $nextMatch ? $nextMatch->id : null,
                         'status' => 'scheduled',
                         'babak' => $babakName,
+                        'format_tanding' => $formatTanding,
                         'waktu_tanding' => $matchDateTime,
                         'match_date' => $matchDateTime,
                         'lokasi' => 'TBA',
@@ -528,6 +532,7 @@ class PertandinganController extends Controller
                     'match_number' => 99, // Special number for 3rd place match
                     'status' => 'scheduled',
                     'babak' => 'Perebutan Juara 3',
+                    'format_tanding' => $formatTanding,
                     'waktu_tanding' => $bronzeDate,
                     'match_date' => $bronzeDate,
                     'lokasi' => 'TBA',

@@ -38,12 +38,12 @@ class Mlbb2024Seeder extends Seeder
 
         // Mapping nama JSON → nama tim di DB.
         $nameMap = [
-            'FKHUM A'       => ['name' => 'Hukum dan Humaniora A', 'prodi' => 'Hukum dan Humaniora'],
-            'FKHUM B'       => ['name' => 'Hukum dan Humaniora B', 'prodi' => 'Hukum dan Humaniora'],
+            'FKHUM A'       => ['name' => 'Pendidikan Bahasa Inggris A', 'prodi' => 'Pendidikan Bahasa Inggris'],
+            'FKHUM B'       => ['name' => 'Pendidikan Bahasa Inggris B', 'prodi' => 'Pendidikan Bahasa Inggris'],
             'Teologi A'     => ['name' => 'Teologi A',             'prodi' => 'Teologi'],
             'Teologi B'     => ['name' => 'Teologi B',             'prodi' => 'Teologi'],
-            'Biotek A'      => ['name' => 'Bioteknologi A',        'prodi' => 'Bioteknologi'],
-            'Biotek B'      => ['name' => 'Bioteknologi B',        'prodi' => 'Bioteknologi'],
+            'Biotek A'      => ['name' => 'Biologi A',             'prodi' => 'Biologi'],
+            'Biotek B'      => ['name' => 'Biologi B',             'prodi' => 'Biologi'],
             'Manajemen A'   => ['name' => 'Manajemen A',           'prodi' => 'Manajemen'],
             'Manajemen B'   => ['name' => 'Manajemen B',           'prodi' => 'Manajemen'],
             'Despro A'      => ['name' => 'Desain Produk A',       'prodi' => 'Desain Produk'],

@@ -26,9 +26,9 @@ class RectorCup2024Seeder extends Seeder
         'Informatika',
         'Sistem Informasi',
         'Biologi',
-        'Teknologi Pangan',
+        '',
         'Pendidikan Bahasa Inggris',
-        'Studi Humanitas',
+        'Pendidikan Bahasa Inggris',
     ];
 
     /**
@@ -82,7 +82,7 @@ class RectorCup2024Seeder extends Seeder
             return 'Arsitektur';
         }
         if (preg_match('/^FKHUM(\s+[AB])?$/', $upper)) {
-            return 'Studi Humanitas';
+            return 'Pendidikan Bahasa Inggris';
         }
         if (preg_match('/^TEOL(\s+[AB])?$/', $upper) || str_contains($upper, 'TEOLOGI')) {
             return 'Filsafat Keilahian';
@@ -294,7 +294,7 @@ class RectorCup2024Seeder extends Seeder
                 'end_date' => '2024-10-13',
                 'matches' => [
                     ["stage" => "Penyisihan", "date" => "2024-10-07", "time" => "18.50-20.00", "team_a" => "Manajemen", "team_b" => "Kedokteran", "score_a" => 45, "score_b" => 21, "winner" => "Manajemen"],
-                    ["stage" => "Penyisihan", "date" => "2024-10-07", "time" => "17.40-18.50", "team_a" => "Manajemen", "team_b" => "Studi Humanitas", "score_a" => 29, "score_b" => 24, "winner" => "Manajemen"],
+                    ["stage" => "Penyisihan", "date" => "2024-10-07", "time" => "17.40-18.50", "team_a" => "Manajemen", "team_b" => "Pendidikan Bahasa Inggris", "score_a" => 29, "score_b" => 24, "winner" => "Manajemen"],
                     ["stage" => "Penyisihan", "date" => "2024-10-09", "time" => "18.50-20.00", "team_a" => "Biologi", "team_b" => "Filsafat Keilahian", "score_a" => 9, "score_b" => 28, "winner" => "Filsafat Keilahian"],
                     ["stage" => "Penyisihan", "date" => "2024-10-07", "time" => "16.30-17.40", "team_a" => "Sistem Informasi", "team_b" => "Desain Produk", "score_a" => 66, "score_b" => 11, "winner" => "Sistem Informasi"],
                     ["stage" => "Penyisihan", "date" => "2024-10-09", "time" => "16.30-17.40", "team_a" => "Informatika", "team_b" => "Akuntansi", "score_a" => 50, "score_b" => 7, "winner" => "Informatika"],
@@ -413,7 +413,7 @@ class RectorCup2024Seeder extends Seeder
             ["date" => "2024-11-03", "time" => "TBA", "round" => "8 Besar", "match" => 1, "team_a" => "Manajemen", "team_b" => "Manajemen"],
             ["date" => "2024-11-03", "time" => "TBA", "round" => "8 Besar", "match" => 2, "team_a" => "Informatika", "team_b" => "Sistem Informasi"],
             ["date" => "2024-11-03", "time" => "TBA", "round" => "8 Besar", "match" => 3, "team_a" => "Akuntansi", "team_b" => "Arsitektur"],
-            ["date" => "2024-11-03", "time" => "TBA", "round" => "8 Besar", "match" => 4, "team_a" => "Sistem Informasi", "team_b" => "Studi Humanitas"],
+            ["date" => "2024-11-03", "time" => "TBA", "round" => "8 Besar", "match" => 4, "team_a" => "Sistem Informasi", "team_b" => "Pendidikan Bahasa Inggris"],
         ];
 
         $this->seedMatches($tournament, $sport, $independentMatches, 'Penyisihan Grup', 'Lapangan Futsal', false);
@@ -436,7 +436,7 @@ class RectorCup2024Seeder extends Seeder
 
         $participants = [
             'Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi',
-            'Kedokteran', 'Biologi', 'Arsitektur', 'Desain Produk', 'Filsafat Keilahian', 'Studi Humanitas',
+            'Kedokteran', 'Biologi', 'Arsitektur', 'Desain Produk', 'Filsafat Keilahian', 'Pendidikan Bahasa Inggris',
         ];
 
         $teamIds = [];
@@ -460,8 +460,8 @@ class RectorCup2024Seeder extends Seeder
         ]);
 
         $matches = [
-            ["stage" => "Penyisihan", "date" => "2024-10-20", "time" => "14.30", "team_a" => "Kedokteran", "team_b" => "Studi Humanitas", "score_a" => 3, "score_b" => 0, "winner" => "Kedokteran", "location" => "Mille Billiard Jogja"],
-            ["stage" => "Penyisihan", "date" => "2024-10-20", "time" => "14.30", "team_a" => "Studi Humanitas", "team_b" => "Manajemen", "score_a" => 0, "score_b" => 3, "winner" => "Manajemen", "location" => "Mille Billiard Jogja"],
+            ["stage" => "Penyisihan", "date" => "2024-10-20", "time" => "14.30", "team_a" => "Kedokteran", "team_b" => "Pendidikan Bahasa Inggris", "score_a" => 3, "score_b" => 0, "winner" => "Kedokteran", "location" => "Mille Billiard Jogja"],
+            ["stage" => "Penyisihan", "date" => "2024-10-20", "time" => "14.30", "team_a" => "Pendidikan Bahasa Inggris", "team_b" => "Manajemen", "score_a" => 0, "score_b" => 3, "winner" => "Manajemen", "location" => "Mille Billiard Jogja"],
             ["stage" => "Penyisihan", "date" => "2024-10-20", "time" => "14.30", "team_a" => "Filsafat Keilahian", "team_b" => "Manajemen", "score_a" => 3, "score_b" => 1, "winner" => "Filsafat Keilahian", "location" => "Mille Billiard Jogja"],
             ["stage" => "Penyisihan", "date" => "2024-10-20", "time" => "14.30", "team_a" => "Akuntansi", "team_b" => "Desain Produk", "score_a" => 3, "score_b" => 0, "winner" => "Akuntansi", "location" => "Mille Billiard Jogja"],
             ["stage" => "Penyisihan", "date" => "2024-10-20", "time" => "14.30", "team_a" => "Informatika", "team_b" => "Sistem Informasi", "score_a" => 0, "score_b" => 3, "winner" => "Sistem Informasi", "location" => "Mille Billiard Jogja"],
