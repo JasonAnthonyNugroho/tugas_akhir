@@ -396,90 +396,10 @@
             </div>
         </div>
     </div>
-    {{-- Modal Preview Bracket --}}
-    <div class="modal fade" id="previewBracketModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-            <div class="modal-content bg-dark border-secondary" style="border-radius: 24px;">
-                <div class="modal-header border-0 p-4">
-                    <h5 class="modal-title text-white font-weight-bold">
-                        <i class="bi bi-diagram-3 mr-2"></i> Preview Struktur Bracket
-                    </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
-                </div>
-                <div class="modal-body p-4 overflow-auto">
-                    <div id="bracketPreviewContent" class="d-flex justify-content-center py-4">
-                        {{-- Content loaded via JS --}}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @section('styles')
 <style>
-    /* Fix untuk memastikan bracket tetap di dalam modal */
-    #previewBracketModal {
-        z-index: 1050;
-    }
-    
-    #previewBracketModal .modal-content {
-        position: relative;
-        z-index: 1051;
-    }
-    
-    #bracketPreviewContent {
-        position: relative;
-        z-index: 1;
-        overflow: auto;
-    }
-    
-    .bracket-wrapper {
-        position: relative;
-        z-index: 1;
-    }
-    
-    .bracket-column {
-        position: relative;
-        z-index: 1;
-    }
-    
-    /* Prevent any absolute positioning from escaping modal */
-    #previewBracketModal * {
-        position: relative !important;
-    }
-    
-    #previewBracketModal .modal-backdrop {
-        z-index: 1049;
-    }
-    
-    /* Fix untuk modal Buat Bracket - pastikan tombol tetap di dalam */
-    #generateBracketModal {
-        z-index: 1050;
-    }
-    
-    #generateBracketModal .modal-content {
-        position: relative;
-        z-index: 1051;
-        overflow: hidden;
-    }
-    
-    #generateBracketModal .modal-footer {
-        position: relative;
-        z-index: 1;
-        border-top: 1px solid var(--glass-border);
-        margin-top: 0;
-    }
-    
-    #generateBracketModal .modal-backdrop {
-        z-index: 1049;
-    }
-    
-    /* Prevent any elements from escaping modal */
-    #generateBracketModal * {
-        position: relative !important;
-    }
-    
     /* Fix untuk modal Edit Pertandingan - mencegah screen gelap dan cursor type */
     /* Hapus aturan z-index global untuk modal agar Bootstrap bisa mengelola stacking secara normal. */
     
@@ -1154,61 +1074,7 @@
             }
         });
 
-        function previewBracket(tournamentId) {
-            $('#bracketPreviewContent').html('<div class="spinner-border text-primary"></div>');
-            
-            // Show modal and wait for it to be fully shown
-            $('#previewBracketModal').modal('show');
-            
-            // Wait for modal to be fully shown before rendering bracket
-            $('#previewBracketModal').on('shown.bs.modal', function () {
-                // Simulating a quick view since we have the data in groupedMatches
-                // In real app, you might fetch via AJAX or just filter from existing DOM
-                const matches = @json($groupedMatches);
-                const tMatches = matches['tournament_' + tournamentId] || [];
-                
-                if (tMatches.length === 0) {
-                    $('#bracketPreviewContent').html('<p class="text-muted text-center">Data bracket tidak ditemukan.</p>');
-                    return;
-                }
 
-                let html = '<div class="bracket-wrapper d-flex align-items-start gap-4" style="position: relative; width: 100%;">';
-                const rounds = [...new Set(tMatches.map(m => m.round))].sort((a,b) => a-b);
-                
-                rounds.forEach(round => {
-                    const roundMatches = tMatches.filter(m => m.round === round);
-                    html += `<div class="bracket-column d-flex flex-column justify-content-around" style="position: relative; min-width: 200px; gap: 20px;">
-                        <div class="text-center mb-3 small font-weight-bold text-uppercase text-primary">${roundMatches[0].babak}</div>`;
-                    
-                    roundMatches.forEach(m => {
-                        const teamA = m.team_a ? m.team_a.name : 'TBD';
-                        const teamB = m.team_b ? m.team_b.name : 'TBD';
-                        html += `
-                        <div class="card bg-dark border-secondary mb-3" style="border-radius: 12px; position: relative;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="small text-white">${teamA}</span>
-                                    <span class="badge bg-primary">${m.score_a || 0}</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span class="small text-white">${teamB}</span>
-                                    <span class="badge bg-primary">${m.score_b || 0}</span>
-                                </div>
-                            </div>
-                        </div>
-                        `;
-                    });
-                    html += '</div>';
-                });
-                html += '</div>';
-                
-                // Render bracket inside modal body
-                $('#bracketPreviewContent').html(html);
-                
-                // Remove the event listener to prevent multiple calls
-                $('#previewBracketModal').off('shown.bs.modal');
-            });
-        }
 
         function confirmSave() {
             Swal.fire({

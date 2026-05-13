@@ -26,39 +26,6 @@ class CustomBracketController extends Controller
         return view('admin.bracket-builder', compact('sports', 'teams'));
     }
 
-    /**
-     * Generate bracket preview (mentah) untuk di-arrange
-     */
-    public function preview(Request $request)
-    {
-        $request->validate([
-            'tournament_name' => 'required|string|max:255',
-            'sport_id' => 'required|exists:sports,id',
-            'team_ids' => 'required|array|min:2',
-            'team_ids.*' => 'exists:teams,id',
-            'bracket_size' => 'required|integer|in:4,8,16,32',
-        ]);
-
-        $sport = Sport::find($request->sport_id);
-        $selectedTeams = Team::whereIn('id', $request->team_ids)
-            ->orderByRaw('FIELD(id, ' . implode(',', $request->team_ids) . ')')
-            ->get();
-        
-        $bracketSize = $request->bracket_size;
-        $numRounds = log($bracketSize, 2);
-        
-        // Generate bracket structure
-        $bracket = $this->generateBracketStructure($bracketSize, $selectedTeams, $sport);
-        
-        return response()->json([
-            'success' => true,
-            'bracket' => $bracket,
-            'teams' => $selectedTeams,
-            'sport' => $sport,
-            'bracket_size' => $bracketSize,
-            'num_rounds' => $numRounds,
-        ]);
-    }
 
     /**
      * Tampilkan halaman arrange bracket (drag & drop) - page terpisah
@@ -194,87 +161,6 @@ class CustomBracketController extends Controller
         return view('public.bracket-view', compact('tournament', 'rounds', 'thirdPlaceMatch'));
     }
 
-    /**
-     * Update bracket arrangement (drag-drop save)
-     */
-    public function updateArrangement(Request $request, Tournament $tournament)
-    {
-        $request->validate([
-            'arrangement' => 'required|array',
-        ]);
-
-        return DB::transaction(function () use ($request, $tournament) {
-            $round1Matches = $tournament->pertandingans()
-                ->where('round', 1)
-                ->orderBy('match_number')
-                ->get();
-
-            foreach ($request->arrangement as $index => $teamIds) {
-                if (isset($round1Matches[$index])) {
-                    $round1Matches[$index]->update([
-                        'team_a_id' => $teamIds[0] ?? null,
-                        'team_b_id' => $teamIds[1] ?? null,
-                    ]);
-                }
-            }
-
-            return response()->json(['success' => true, 'message' => 'Bracket arrangement updated!']);
-        });
-    }
-
-    /**
-     * Generate bracket structure untuk preview
-     */
-    private function generateBracketStructure($size, $teams, $sport)
-    {
-        $numRounds = log($size, 2);
-        $structure = [];
-        
-        // Pad teams dengan null (BYE) jika kurang dari size
-        $paddedTeams = $teams->toArray();
-        while (count($paddedTeams) < $size) {
-            $paddedTeams[] = null;
-        }
-
-        // Generate rounds dari Round 1 (paling bawah) sampai Final
-        for ($round = 1; $round <= $numRounds; $round++) {
-            $numMatches = $size / pow(2, $round);
-            $roundMatches = [];
-            
-            for ($matchNum = 1; $matchNum <= $numMatches; $matchNum++) {
-                $roundMatches[] = [
-                    'match_number' => $matchNum,
-                    'round' => $round,
-                    'babak' => $this->getBabakName($round, $numRounds),
-                    'team_a' => null,
-                    'team_b' => null,
-                    'winner' => null,
-                ];
-            }
-            
-            $structure[] = [
-                'round' => $round,
-                'babak' => $this->getBabakName($round, $numRounds),
-                'matches' => $roundMatches,
-            ];
-        }
-
-        // Isi Round 1 dengan teams yang tersedia
-        $teamIndex = 0;
-        foreach ($structure[0]['matches'] as &$match) {
-            if ($teamIndex < count($paddedTeams) && $paddedTeams[$teamIndex]) {
-                $match['team_a'] = $paddedTeams[$teamIndex];
-            }
-            $teamIndex++;
-            
-            if ($teamIndex < count($paddedTeams) && $paddedTeams[$teamIndex]) {
-                $match['team_b'] = $paddedTeams[$teamIndex];
-            }
-            $teamIndex++;
-        }
-
-        return $structure;
-    }
 
     /**
      * Create actual matches di database dengan distribusi tanggal
