@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Custom Bracket Builder')
+@section('title', 'Generate Bracket')
 
 @section('content')
 <div class="container-fluid py-4">
@@ -10,9 +10,9 @@
         <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
             <div>
                 <h2 class="font-weight-bold text-white mb-1">
-                    <i class="bi bi-magic mr-2"></i>Custom Bracket Builder
+                    <i class="bi bi-diagram-3 mr-2"></i>Generate Bracket
                 </h2>
-                <p class="text-muted mb-0">Konfigurasi turnamen dan pilih tim peserta. Lanjut ke arrange bracket di langkah berikutnya.</p>
+                <p class="text-muted mb-0">Konfigurasi turnamen dan pilih tim peserta. Lanjut ke atur posisi bracket di langkah berikutnya.</p>
             </div>
             <div class="bb-stepper d-flex align-items-center">
                 <div class="bb-step active">
@@ -49,6 +49,10 @@
                     <div class="col-md-6 mb-3">
                         <label class="bb-label"><i class="bi bi-pencil mr-1"></i>Keterangan <span class="text-muted">(opsional)</span></label>
                         <input type="text" name="keterangan" class="bb-input" placeholder="Informasi tambahan">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="bb-label"><i class="bi bi-geo-alt mr-1"></i>Lokasi / GOR</label>
+                        <input type="text" name="lokasi" class="bb-input" placeholder="Contoh: GOR UKDW">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="bb-label"><i class="bi bi-calendar-event mr-1"></i>Tanggal Mulai</label>

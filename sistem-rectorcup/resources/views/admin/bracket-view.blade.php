@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('title', 'Bracket: ' . $tournament->name)
 
@@ -23,7 +23,7 @@
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.tournament.bracket.builder') }}" class="btn btn-outline-light">
-                <i class="bi bi-plus-lg mr-2"></i>Buat Baru
+                <i class="bi bi-diagram-3 mr-2"></i>Generate Bracket
             </a>
             <form action="{{ route('admin.bracket.reroll', $tournament) }}" method="POST" class="d-inline">
                 @csrf
@@ -39,6 +39,18 @@
             </form>
         </div>
     </div>
+
+    {{-- Flash Messages --}}
+    @if(session('success'))
+        <div class="alert border-0 shadow-sm mb-4 py-3" style="border-radius: 16px; background: rgba(16, 185, 129, 0.15); color: #10b981; border-left: 4px solid #10b981 !important;">
+            <i class="bi bi-check-circle-fill mr-2"></i> {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert border-0 shadow-sm mb-4 py-3" style="border-radius: 16px; background: rgba(239, 68, 68, 0.15); color: #f87171; border-left: 4px solid #ef4444 !important;">
+            <i class="bi bi-exclamation-triangle-fill mr-2"></i> {{ session('error') }}
+        </div>
+    @endif
 
     {{-- Tournament Stats --}}
     <div class="row mb-4">

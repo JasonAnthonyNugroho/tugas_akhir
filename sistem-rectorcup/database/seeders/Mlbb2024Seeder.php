@@ -40,8 +40,8 @@ class Mlbb2024Seeder extends Seeder
         $nameMap = [
             'FKHUM A'       => ['name' => 'Pendidikan Bahasa Inggris A', 'prodi' => 'Pendidikan Bahasa Inggris'],
             'FKHUM B'       => ['name' => 'Pendidikan Bahasa Inggris B', 'prodi' => 'Pendidikan Bahasa Inggris'],
-            'Teologi A'     => ['name' => 'Teologi A',             'prodi' => 'Teologi'],
-            'Teologi B'     => ['name' => 'Teologi B',             'prodi' => 'Teologi'],
+            'Teologi A'     => ['name' => 'Filsafat Keilahian A',  'prodi' => 'Filsafat Keilahian'],
+            'Teologi B'     => ['name' => 'Filsafat Keilahian B',  'prodi' => 'Filsafat Keilahian'],
             'Biotek A'      => ['name' => 'Biologi A',             'prodi' => 'Biologi'],
             'Biotek B'      => ['name' => 'Biologi B',             'prodi' => 'Biologi'],
             'Manajemen A'   => ['name' => 'Manajemen A',           'prodi' => 'Manajemen'],

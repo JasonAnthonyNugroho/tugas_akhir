@@ -42,4 +42,5 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     Route::post('/admin/bracket-builder/store', [CustomBracketController::class, 'store'])->name('admin.tournament.bracket.store');
     Route::get('/admin/tournament/{tournament}/bracket', [CustomBracketController::class, 'viewBracket'])->name('admin.tournament.bracket.view');
     Route::post('/admin/tournament/{tournament}/arrangement', [CustomBracketController::class, 'updateArrangement'])->name('admin.tournament.bracket.arrangement');
+    Route::patch('/admin/tournament/{tournament}/update', [CustomBracketController::class, 'updateTournament'])->name('admin.tournament.update');
 });

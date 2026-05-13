@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Arrange Bracket — ' . $tournamentName)
+@section('title', 'Atur Bracket — ' . $tournamentName)
 
 @section('content')
 <div class="container-fluid py-4">
@@ -9,7 +9,7 @@
     <div class="mb-4 d-flex align-items-center justify-content-between">
         <div>
             <h2 class="font-weight-bold text-white mb-1">
-                <i class="bi bi-shuffle mr-2"></i>Arrange Bracket
+                <i class="bi bi-diagram-3 mr-2"></i>Atur Bracket
             </h2>
             <p class="text-muted mb-0">
                 {{ $tournamentName }} &mdash; {{ $sport->nama_sport }} &mdash; {{ $bracketSize }} Tim
@@ -33,18 +33,18 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="arrange-layout">
 
-        {{-- Panel Kiri: Tim Tersedia --}}
-        <div class="col-md-3 mb-4">
-            <div class="card border-0 h-100" style="background: rgba(255,255,255,0.04); border-radius: 12px;">
+        {{-- Panel Kiri: Tim Tersedia (STICKY) --}}
+        <div class="team-panel-sticky">
+            <div class="card border-0" style="background: rgba(255,255,255,0.04); border-radius: 12px;">
                 <div class="card-header bg-transparent border-0 pb-2 pt-3 px-3 d-flex justify-content-between align-items-center">
                     <span class="text-white font-weight-bold">
                         <i class="bi bi-people mr-1"></i>Tim Tersedia
                     </span>
                     <span class="badge badge-primary" id="poolCount">{{ count($selectedTeams) }}</span>
                 </div>
-                <div class="card-body p-2" id="availableTeams" style="max-height: 560px; overflow-y: auto;">
+                <div class="card-body p-2" id="availableTeams">
                     @foreach($selectedTeams as $team)
                         <div class="team-card"
                              draggable="true"
@@ -71,7 +71,7 @@
         </div>
 
         {{-- Panel Kanan: Bracket --}}
-        <div class="col-md-9">
+        <div class="bracket-panel">
             <div class="card border-0" style="background: rgba(255,255,255,0.03); border-radius: 12px;">
                 <div class="card-body p-3">
                     <div id="bracketContainer" class="bracket-wrap">
@@ -98,6 +98,7 @@
     <input type="hidden" name="sport_id"        value="{{ $sportId }}">
     <input type="hidden" name="bracket_size"    value="{{ $bracketSize }}">
     <input type="hidden" name="keterangan"      value="{{ $keterangan }}">
+    <input type="hidden" name="lokasi"           value="{{ $lokasi ?? '' }}">
     <input type="hidden" name="start_date"         value="{{ $startDate }}">
     <input type="hidden" name="end_date"           value="{{ $endDate }}">
     <input type="hidden" name="external_score_url" value="{{ $externalScoreUrl ?? '' }}">
@@ -108,6 +109,68 @@
 
 @section('styles')
 <style>
+    /* ── Main Layout: Sticky team panel + scrollable bracket ── */
+    .arrange-layout {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .team-panel-sticky {
+        position: sticky;
+        top: 80px; /* offset for navbar */
+        width: 280px;
+        min-width: 280px;
+        max-height: calc(100vh - 100px);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .team-panel-sticky .card {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 100px);
+    }
+
+    .team-panel-sticky #availableTeams {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    /* Scrollbar for team list */
+    .team-panel-sticky #availableTeams::-webkit-scrollbar { width: 5px; }
+    .team-panel-sticky #availableTeams::-webkit-scrollbar-thumb {
+        background: rgba(99,102,241,0.4);
+        border-radius: 3px;
+    }
+    .team-panel-sticky #availableTeams::-webkit-scrollbar-thumb:hover {
+        background: rgba(99,102,241,0.7);
+    }
+
+    .bracket-panel {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Mobile: stack vertically, no sticky */
+    @media (max-width: 991px) {
+        .arrange-layout {
+            flex-direction: column;
+        }
+        .team-panel-sticky {
+            position: relative;
+            top: 0;
+            width: 100%;
+            min-width: 100%;
+            max-height: 300px;
+        }
+        .team-panel-sticky .card {
+            max-height: 300px;
+        }
+    }
+
     /* ── Drag source cards ── */
     .team-card {
         cursor: grab;
@@ -181,12 +244,14 @@
     /* ── Bracket layout (HORIZONTAL tree) ── */
     .bracket-wrap {
         overflow-x: auto;
+        overflow-y: auto;
         padding: 24px 20px;
         background: rgba(0,0,0,0.2);
         border-radius: 14px;
         min-height: 520px;
+        max-height: calc(100vh - 180px);
     }
-    .bracket-wrap::-webkit-scrollbar { height: 10px; }
+    .bracket-wrap::-webkit-scrollbar { width: 8px; height: 10px; }
     .bracket-wrap::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
     .bracket-wrap::-webkit-scrollbar-thumb {
         background: rgba(99,102,241,0.5);
@@ -782,8 +847,29 @@ document.getElementById('saveBracketBtn').addEventListener('click', () => {
             text: 'Isi minimal satu slot dulu!', confirmButtonColor: '#6366f1' });
         return;
     }
-    document.getElementById('formArrangement').value = JSON.stringify(arrangement);
-    document.getElementById('saveBracketForm').submit();
+
+    Swal.fire({
+        title: 'Simpan Bracket?',
+        text: 'Bracket akan di-generate dan tournament baru akan dibuat.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="bi bi-check-lg mr-1"></i> Ya, Simpan!',
+        cancelButtonText: 'Cek Kembali',
+        background: '#1a1a2e',
+        color: '#ffffff'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading state
+            const btn = document.getElementById('saveBracketBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Menyimpan bracket...';
+
+            document.getElementById('formArrangement').value = JSON.stringify(arrangement);
+            document.getElementById('saveBracketForm').submit();
+        }
+    });
 });
 
 /* ── Init ── */
@@ -791,6 +877,57 @@ buildBracket();
 updatePlacedUI();
 
 /* Safety: kalau drag dibatalkan di luar drop zone, clear class is-dragging */
-document.addEventListener('dragend', () => document.body.classList.remove('is-dragging'));
+document.addEventListener('dragend', () => {
+    document.body.classList.remove('is-dragging');
+    stopAutoScroll();
+});
+
+/* ── Auto-scroll saat drag mendekati edge bracket container ── */
+let autoScrollInterval = null;
+
+function stopAutoScroll() {
+    if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+        autoScrollInterval = null;
+    }
+}
+
+document.addEventListener('dragover', (e) => {
+    const bracketWrap = document.querySelector('.bracket-wrap');
+    if (!bracketWrap) return;
+
+    const rect = bracketWrap.getBoundingClientRect();
+    const edgeThreshold = 60; // px from edge to start scrolling
+    const scrollSpeed = 12;
+
+    let scrollX = 0, scrollY = 0;
+
+    // Check if cursor is near bracket container edges
+    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        if (e.clientY - rect.top < edgeThreshold) scrollY = -scrollSpeed;
+        if (rect.bottom - e.clientY < edgeThreshold) scrollY = scrollSpeed;
+        if (e.clientX - rect.left < edgeThreshold) scrollX = -scrollSpeed;
+        if (rect.right - e.clientX < edgeThreshold) scrollX = scrollSpeed;
+    }
+
+    // Also scroll page if near window top/bottom edges
+    const windowEdge = 80;
+    if (e.clientY < windowEdge) {
+        window.scrollBy(0, -scrollSpeed);
+    } else if (e.clientY > window.innerHeight - windowEdge) {
+        window.scrollBy(0, scrollSpeed);
+    }
+
+    if (scrollX || scrollY) {
+        if (!autoScrollInterval) {
+            autoScrollInterval = setInterval(() => {
+                bracketWrap.scrollBy(scrollX, scrollY);
+            }, 16);
+        }
+    } else {
+        stopAutoScroll();
+    }
+});
 </script>
 @endsection

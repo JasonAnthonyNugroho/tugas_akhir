@@ -75,6 +75,7 @@ class CustomBracketController extends Controller
             'end_date'           => 'required|date|after_or_equal:start_date',
             'external_score_url' => 'nullable|url|max:500',
             'format_tanding'     => 'nullable|in:BO1,BO3',
+            'lokasi'             => 'nullable|string|max:255',
         ]);
 
         $sport        = Sport::find($request->sport_id);
@@ -87,6 +88,7 @@ class CustomBracketController extends Controller
             'sportId'          => $request->sport_id,
             'bracketSize'      => (int) $request->bracket_size,
             'keterangan'       => $request->keterangan,
+            'lokasi'           => $request->lokasi,
             'startDate'        => $request->start_date,
             'endDate'          => $request->end_date,
             'externalScoreUrl' => $request->external_score_url,
@@ -102,12 +104,18 @@ class CustomBracketController extends Controller
      */
     public function store(Request $request)
     {
+        // Arrangement dikirim sebagai JSON string dari JavaScript, decode dulu
+        if (is_string($request->arrangement)) {
+            $request->merge(['arrangement' => json_decode($request->arrangement, true)]);
+        }
+
         $request->validate([
             'tournament_name'    => 'required|string|max:255',
             'sport_id'           => 'required|exists:sports,id',
             'arrangement'        => 'required|array', // Format: [match_index => [team_a_id, team_b_id]]
             'bracket_size'       => 'required|integer|in:4,8,16,32',
             'keterangan'         => 'nullable|string|max:500',
+            'lokasi'             => 'nullable|string|max:255',
             'start_date'         => 'required|date',
             'end_date'           => 'required|date|after_or_equal:start_date',
             'external_score_url' => 'nullable|url|max:500',
@@ -136,10 +144,11 @@ class CustomBracketController extends Controller
             $formatTanding = in_array($request->format_tanding, ['BO1', 'BO3']) ? $request->format_tanding : 'BO1';
 
             // Generate matches dengan arrangement yang sudah di-set
-            $this->createBracketMatches($tournament, $request->sport_id, $bracketSize, $numRounds, $request->arrangement, $request->keterangan, $formatTanding);
+            $lokasi = $request->lokasi ?: 'TBA';
+            $this->createBracketMatches($tournament, $request->sport_id, $bracketSize, $numRounds, $request->arrangement, $request->keterangan, $formatTanding, $lokasi);
 
             return redirect()->route('admin.tournament.bracket.view', $tournament)
-                ->with('success', 'Custom bracket berhasil dibuat!');
+                ->with('success', 'Bracket berhasil di-generate! 🎉');
         });
     }
 
@@ -270,7 +279,7 @@ class CustomBracketController extends Controller
     /**
      * Create actual matches di database dengan distribusi tanggal
      */
-    private function createBracketMatches($tournament, $sportId, $bracketSize, $numRounds, $arrangement, $keterangan, $formatTanding = 'BO1')
+    private function createBracketMatches($tournament, $sportId, $bracketSize, $numRounds, $arrangement, $keterangan, $formatTanding = 'BO1', $lokasi = 'TBA')
     {
         $roundMatches = [];
         
@@ -313,7 +322,7 @@ class CustomBracketController extends Controller
                     'format_tanding' => $formatTanding,
                     'waktu_tanding' => $matchDateTime,
                     'match_date' => $matchDateTime,
-                    'lokasi' => 'TBA',
+                    'lokasi' => $lokasi,
                     'keterangan' => $keterangan,
                 ]);
 
@@ -365,5 +374,33 @@ class CustomBracketController extends Controller
             case 4: return 'Round of 32';
             default: return 'Round ' . $round;
         }
+    }
+
+    /**
+     * Update tournament details (name, dates, lokasi)
+     */
+    public function updateTournament(Request $request, Tournament $tournament)
+    {
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date|after_or_equal:start_date',
+            'lokasi'     => 'nullable|string|max:255',
+        ]);
+
+        $tournament->update([
+            'name'       => $request->name,
+            'start_date' => $request->start_date,
+            'end_date'   => $request->end_date,
+        ]);
+
+        // Update lokasi di semua pertandingan turnamen ini
+        if ($request->filled('lokasi')) {
+            $tournament->pertandingans()->update([
+                'lokasi' => $request->lokasi,
+            ]);
+        }
+
+        return back()->with('success', "Tournament \"{$tournament->name}\" berhasil diperbarui!");
     }
 }

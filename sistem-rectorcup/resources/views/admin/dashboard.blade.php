@@ -10,21 +10,15 @@
         </div>
 
         <div class="admin-header-actions">
-            {{-- Primary CTA: Custom Bracket Builder (recommended path) --}}
+            {{-- Primary CTA: Generate Bracket --}}
             <a href="{{ route('admin.tournament.bracket.builder') }}"
                class="btn btn-primary-action">
                 <i class="bi bi-diagram-3 mr-2"></i>
-                <span>Bracket Custom</span>
+                <span>Generate Bracket</span>
             </a>
 
             {{-- Secondary actions --}}
             <div class="admin-header-secondary">
-                <button type="button" class="btn btn-secondary-action"
-                        data-toggle="modal" data-target="#generateBracketModal"
-                        title="Generate bracket otomatis dari tim yang dipilih">
-                    <i class="bi bi-diagram-3 mr-2"></i>
-                    <span>Bracket Otomatis</span>
-                </button>
                 <button type="button" class="btn btn-secondary-action"
                         data-toggle="modal" data-target="#addMatchModal"
                         title="Tambah satu pertandingan independen (di luar bracket)">
@@ -40,6 +34,11 @@
     @if(session('success'))
         <div class="alert alert-success border-0 shadow-sm mb-4 py-3" style="border-radius: 16px; background: rgba(16, 185, 129, 0.1); color: #10b981;">
             <i class="bi bi-check-circle-fill mr-2"></i> {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert border-0 shadow-sm mb-4 py-3" style="border-radius: 16px; background: rgba(239, 68, 68, 0.1); color: #f87171;">
+            <i class="bi bi-exclamation-triangle-fill mr-2"></i> {{ session('error') }}
         </div>
     @endif
 
@@ -60,6 +59,12 @@
                                     <div>
                                         <h6 class="font-weight-bold text-white mb-0">{{ $tournament->name }}</h6>
                                         <span class="text-muted small text-uppercase">{{ $tournament->sport->nama_sport }} • {{ $tournament->year }}</span>
+                                        @php
+                                            $tLokasi = $tournament->pertandingans->whereNotIn('lokasi', ['TBA', ''])->pluck('lokasi')->unique()->first();
+                                        @endphp
+                                        @if($tLokasi)
+                                            <br><span class="text-muted small"><i class="bi bi-geo-alt mr-1"></i>{{ $tLokasi }}</span>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="dropdown">
@@ -70,11 +75,22 @@
                                         <a href="{{ route('admin.tournament.bracket.view', $tournament) }}" class="dropdown-item text-white small">
                                             <i class="bi bi-eye mr-2"></i> View Bracket
                                         </a>
+                                        <button type="button" class="dropdown-item text-white small"
+                                                data-toggle="modal" data-target="#editTournament{{ $tournament->id }}">
+                                            <i class="bi bi-pencil mr-2"></i> Edit Tournament
+                                        </button>
                                         <div class="dropdown-divider border-secondary"></div>
                                         <form action="{{ route('admin.bracket.reroll', $tournament->id) }}" method="POST" onsubmit="return confirm('Reroll akan mengacak ulang semua tim di bracket. Lanjutkan?')">
                                             @csrf
                                             <button type="submit" class="dropdown-item text-warning small font-weight-bold">
                                                 <i class="bi bi-shuffle mr-2"></i> Reroll Bracket
+                                            </button>
+                                        </form>
+                                        <div class="dropdown-divider border-secondary"></div>
+                                        <form action="{{ route('admin.tournament.delete', $tournament) }}" method="POST" onsubmit="return confirm('Hapus tournament ini beserta semua pertandingannya?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="dropdown-item text-danger small font-weight-bold">
+                                                <i class="bi bi-trash mr-2"></i> Hapus Tournament
                                             </button>
                                         </form>
                                     </div>
@@ -126,6 +142,66 @@
             @endforelse
         </div>
     </div>
+
+    {{-- Modal Edit Tournament --}}
+    @foreach($tournaments as $tournament)
+        @php
+            $tLokasiEdit = $tournament->pertandingans->whereNotIn('lokasi', ['TBA', ''])->pluck('lokasi')->unique()->first() ?? '';
+        @endphp
+        <div class="modal fade dash-modal" id="editTournament{{ $tournament->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content dash-modal-content">
+                    <div class="dash-modal-header">
+                        <div class="dash-modal-icon"><i class="bi bi-pencil-square"></i></div>
+                        <div class="flex-grow-1">
+                            <h5 class="dash-modal-title">Edit Tournament</h5>
+                            <p class="dash-modal-subtitle">{{ $tournament->name }}</p>
+                        </div>
+                        <button type="button" class="dash-modal-close" data-dismiss="modal" aria-label="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <form action="{{ route('admin.tournament.update', $tournament) }}" method="POST" class="mb-0">
+                        @csrf @method('PATCH')
+                        <div class="modal-body dash-modal-body">
+                            <div class="dash-form-section">
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label class="dash-label"><i class="bi bi-trophy mr-1"></i> Nama Tournament</label>
+                                        <input type="text" name="name" class="dash-input" value="{{ $tournament->name }}" required>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label class="dash-label"><i class="bi bi-geo-alt mr-1"></i> Lokasi / GOR</label>
+                                        <input type="text" name="lokasi" class="dash-input" value="{{ $tLokasiEdit }}" placeholder="Contoh: GOR UKDW">
+                                        <small class="dash-hint">
+                                            <i class="bi bi-info-circle mr-1"></i>
+                                            Mengubah lokasi akan update semua pertandingan di turnamen ini.
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="dash-label"><i class="bi bi-calendar-event mr-1"></i> Tanggal Mulai</label>
+                                        <input type="date" name="start_date" class="dash-input"
+                                               value="{{ $tournament->start_date ? \Carbon\Carbon::parse($tournament->start_date)->format('Y-m-d') : '' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="dash-label"><i class="bi bi-calendar-check mr-1"></i> Tanggal Selesai</label>
+                                        <input type="date" name="end_date" class="dash-input"
+                                               value="{{ $tournament->end_date ? \Carbon\Carbon::parse($tournament->end_date)->format('Y-m-d') : '' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dash-modal-footer">
+                            <button type="button" class="btn-modal-cancel" data-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn-modal-primary">
+                                <i class="bi bi-check2-circle mr-2"></i>Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
 
     {{-- Section Independent Matches --}}
     <div class="mb-4">
@@ -191,157 +267,8 @@
         </div>
     </div>
 
-    {{-- Modal Buat Bracket Otomatis --}}
-<div class="modal fade dash-modal" id="generateBracketModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
-        <div class="modal-content dash-modal-content">
-            {{-- Header --}}
-            <div class="dash-modal-header">
-                <div class="dash-modal-icon"><i class="bi bi-diagram-3"></i></div>
-                <div class="flex-grow-1">
-                    <h5 class="dash-modal-title">Bracket Otomatis</h5>
-                    <p class="dash-modal-subtitle">Generate bracket dengan pengacakan tim otomatis</p>
-                </div>
-                <button type="button" class="dash-modal-close" data-dismiss="modal" aria-label="Close">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
 
-            <form action="{{ route('admin.bracket.generate') }}" method="POST" class="mb-0">
-                @csrf
-                <div class="modal-body dash-modal-body">
 
-                    {{-- Section: Info Turnamen --}}
-                    <div class="dash-form-section">
-                        <div class="dash-section-title">
-                            <i class="bi bi-info-square"></i>
-                            <span>Informasi Turnamen</span>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label class="dash-label">Nama Tournament <span class="text-danger">*</span></label>
-                                <input type="text" name="tournament_name" class="dash-input"
-                                       placeholder="Contoh: Rector Cup Futsal 2026" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="dash-label">Jumlah Tim</label>
-                                <select name="manual_team_count" class="dash-input">
-                                    <option value="">Auto (ikuti list)</option>
-                                    <option value="4">4 Tim</option>
-                                    <option value="8">8 Tim</option>
-                                    <option value="16">16 Tim</option>
-                                </select>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="dash-label">Cabang Olahraga <span class="text-danger">*</span></label>
-                                <select name="sport_id" class="dash-input" required>
-                                    <option value="" disabled selected>Pilih cabang olahraga...</option>
-                                    @foreach($sports as $sport)
-                                        <option value="{{ $sport->id }}">{{ $sport->nama_sport }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="dash-label"><i class="bi bi-controller mr-1"></i> Format Pertandingan <span class="text-danger">*</span></label>
-                                <div class="d-flex" style="gap: 12px;">
-                                    <label class="format-pill flex-fill">
-                                        <input type="radio" name="format_tanding" value="BO1" checked>
-                                        <span><strong>BO1</strong><small>Single match / Best of 1</small></span>
-                                    </label>
-                                    <label class="format-pill flex-fill">
-                                        <input type="radio" name="format_tanding" value="BO3">
-                                        <span><strong>BO3</strong><small>Best of 3 (mis. MLBB)</small></span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="dash-label">Keterangan Bracket</label>
-                                <input type="text" name="keterangan" class="dash-input"
-                                       placeholder="Contoh: Basket Putra, Badminton Ganda Putra">
-                                <small class="dash-hint">
-                                    <i class="bi bi-lightbulb mr-1"></i>
-                                    Keterangan ditampilkan di bracket untuk konteks tambahan.
-                                </small>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="dash-label"><i class="bi bi-calendar-event mr-1"></i> Tanggal Mulai <span class="text-danger">*</span></label>
-                                <input type="date" name="start_date" class="dash-input" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="dash-label"><i class="bi bi-calendar-check mr-1"></i> Tanggal Selesai <span class="text-danger">*</span></label>
-                                <input type="date" name="end_date" class="dash-input" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Section: Pilih Tim --}}
-                    <div class="dash-form-section">
-                        <div class="dash-section-title">
-                            <i class="bi bi-people-fill"></i>
-                            <span>Tim Peserta</span>
-                            <span class="dash-section-hint">Minimal 2 tim, atau biarkan kosong untuk bracket manual</span>
-                        </div>
-
-                        <div class="dash-team-picker">
-                            @php
-                                $groupedTeams = $teams->groupBy('prodi');
-                            @endphp
-
-                            {{-- Opsi Seluruh Prodi --}}
-                            @if($groupedTeams->has('Semua Prodi'))
-                                <div class="dash-prodi-group">
-                                    <div class="dash-prodi-header dash-prodi-special">
-                                        <i class="bi bi-globe2 mr-2"></i>Opsi Khusus
-                                    </div>
-                                    @foreach($groupedTeams['Semua Prodi'] as $team)
-                                        <label class="dash-team-pick dash-team-pick-wide" for="team_bracket_{{ $team->id }}">
-                                            <input type="checkbox" name="team_ids[]" value="{{ $team->id }}"
-                                                   id="team_bracket_{{ $team->id }}">
-                                            <span class="dash-team-check"><i class="bi bi-check-lg"></i></span>
-                                            <div class="flex-grow-1">
-                                                <div class="dash-team-name"><i class="bi bi-people mr-1"></i>{{ $team->name }}</div>
-                                                <small class="text-muted">Untuk cabang yang semua prodi ikut, misal PUBG Mobile</small>
-                                            </div>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            @endif
-
-                            {{-- Tim per Prodi --}}
-                            @foreach($groupedTeams as $prodi => $prodiTeams)
-                                @if($prodi != 'Semua Prodi')
-                                    <div class="dash-prodi-group">
-                                        <div class="dash-prodi-header">
-                                            <i class="bi bi-building mr-2"></i>{{ $prodi }}
-                                            <span class="dash-prodi-count">{{ $prodiTeams->count() }} tim</span>
-                                        </div>
-                                        <div class="dash-team-grid">
-                                            @foreach($prodiTeams as $team)
-                                                <label class="dash-team-pick" for="team_bracket_{{ $team->id }}">
-                                                    <input type="checkbox" name="team_ids[]" value="{{ $team->id }}"
-                                                           id="team_bracket_{{ $team->id }}">
-                                                    <span class="dash-team-check"><i class="bi bi-check-lg"></i></span>
-                                                    <span class="dash-team-name">{{ $team->name }}</span>
-                                                </label>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dash-modal-footer">
-                    <button type="button" class="btn-modal-cancel" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn-modal-primary">
-                        <i class="bi bi-magic mr-2"></i>Generate Bracket
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
     {{-- Modal Tambah Pertandingan --}}
     <div class="modal fade dash-modal" id="addMatchModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -421,7 +348,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="dash-label"><i class="bi bi-geo-alt mr-1"></i> Lokasi / GOR <span class="text-danger">*</span></label>
-                                    <input type="text" name="lokasi" class="dash-input" placeholder="Contoh: Lapangan Basket UKDW" required>
+                                    <input type="text" name="lokasi" class="dash-input" placeholder="Contoh: GOR UKDW" required>
                                 </div>
                             </div>
                         </div>
@@ -1363,7 +1290,7 @@
                                 <div class="col-md-6 mb-4">
                                     <label class="small font-weight-bold text-uppercase text-muted mb-2">Lokasi / GOR</label>
                                     <input type="text" name="lokasi" class="form-control" 
-                                        value="{{ $p->lokasi }}" placeholder="Contoh: Lapangan Basket UKDW" required>
+                                        value="{{ $p->lokasi }}" placeholder="Contoh: GOR UKDW" required>
                                 </div>
                                 <div class="col-md-12 mb-4">
                                     <label class="small font-weight-bold text-uppercase text-muted mb-2">
