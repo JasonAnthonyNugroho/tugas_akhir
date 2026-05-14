@@ -71,6 +71,13 @@ class CustomBracketController extends Controller
      */
     public function store(Request $request)
     {
+        // Debug: Log tanggal yang diterima
+        \Log::info('Tournament Store - Received dates:', [
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'all_request' => $request->all()
+        ]);
+
         // Arrangement dikirim sebagai JSON string dari JavaScript, decode dulu
         if (is_string($request->arrangement)) {
             $request->merge(['arrangement' => json_decode($request->arrangement, true)]);
@@ -90,6 +97,15 @@ class CustomBracketController extends Controller
         ]);
 
         return DB::transaction(function () use ($request) {
+            // Debug: Log parsed dates
+            $startDate = \Carbon\Carbon::parse($request->start_date);
+            $endDate = \Carbon\Carbon::parse($request->end_date);
+            
+            \Log::info('Tournament Store - Parsed dates:', [
+                'start_date_parsed' => $startDate->format('Y-m-d H:i:s'),
+                'end_date_parsed' => $endDate->format('Y-m-d H:i:s'),
+            ]);
+
             // Buat tournament
             $tournament = Tournament::create([
                 'name'               => $request->tournament_name,
@@ -100,6 +116,14 @@ class CustomBracketController extends Controller
                 'start_date'         => $request->start_date,
                 'end_date'           => $request->end_date,
                 'external_score_url' => $request->external_score_url,
+            ]);
+
+            // Debug: Log saved tournament
+            \Log::info('Tournament Store - Saved tournament:', [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+                'start_date_saved' => $tournament->start_date,
+                'end_date_saved' => $tournament->end_date,
             ]);
 
             // Attach teams ke tournament

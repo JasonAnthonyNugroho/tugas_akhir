@@ -14,6 +14,10 @@
             <p class="text-muted mb-0">
                 {{ $tournamentName }} &mdash; {{ $sport->nama_sport }} &mdash; {{ $bracketSize }} Tim
             </p>
+            <p class="text-muted mb-0 mt-1">
+                <i class="bi bi-calendar-event mr-1"></i>
+                <small>{{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}</small>
+            </p>
         </div>
         <a href="{{ route('admin.tournament.bracket.builder') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left mr-1"></i>Kembali

@@ -8,6 +8,11 @@ class Tournament extends Model
 {
     protected $fillable = ['name', 'type', 'is_active', 'sport_id', 'year', 'start_date', 'end_date', 'external_score_url'];
 
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
+
     /**
      * Boot method untuk handle cascade delete
      */
