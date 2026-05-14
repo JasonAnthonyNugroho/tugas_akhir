@@ -14,14 +14,14 @@ class PertandinganController extends Controller
 {
     public function index()
     {
-        // Auto-update status scheduled ke live jika waktu sudah terlewati
-        Pertandingan::autoUpdateLiveStatus();
-
         $selectedSport = request('sport_id');
 
         // Tampilkan semua match yang sedang live atau terjadwal (termasuk dari tournament).
+        // FILTER: Hanya tampilkan pertandingan yang BUKAN TBD (kedua tim sudah terisi)
         $query = Pertandingan::with(['teamA', 'teamB', 'sport', 'games'])
-            ->whereIn('status', ['live', 'scheduled']);
+            ->whereIn('status', ['live', 'scheduled'])
+            ->whereNotNull('team_a_id')
+            ->whereNotNull('team_b_id');
 
         if ($selectedSport && $selectedSport !== 'all') {
             $query->where('sport_id', $selectedSport);
@@ -52,9 +52,6 @@ class PertandinganController extends Controller
 
     public function adminDashboard()
     {
-        // Auto-update status scheduled ke live jika waktu sudah terlewati
-        Pertandingan::autoUpdateLiveStatus();
-
         $teams = Team::orderBy('name', 'asc')->get();
         $sports = Sport::orderBy('nama_sport', 'asc')->get();
 
@@ -246,9 +243,6 @@ class PertandinganController extends Controller
 
     public function manageScore()
     {
-        // Auto-update status scheduled ke live jika waktu sudah terlewati
-        Pertandingan::autoUpdateLiveStatus();
-
         $pertandingans = Pertandingan::with(['teamA', 'teamB', 'sport', 'games', 'tournament'])
             ->orderBy('status', 'asc') // live akan muncul lebih dulu
             ->orderBy('waktu_tanding', 'asc') // yang paling awal/jadul dulu
@@ -436,6 +430,6 @@ class PertandinganController extends Controller
     public function deleteTournament(\App\Models\Tournament $tournament)
     {
         $tournament->delete();
-        return back()->with('success', 'Turnamen berhasil dihapus!');
+        return back()->with('success', 'Turnamen dan semua pertandingan terkait berhasil dihapus!');
     }
 }

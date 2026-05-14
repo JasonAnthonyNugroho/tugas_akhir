@@ -124,7 +124,7 @@
                     </div>
                     <div>
                         <h2 class="font-weight-bold mb-0 text-white">{{ $selectedTournament->name }}</h2>
-                        <p class="text-muted mb-0 small text-uppercase tracking-wider">{{ $selectedTournament->sport->nama_sport }} • {{ $selectedTournament->year }}</p>
+                        <p class="text-muted mb-0 small text-uppercase tracking-wider">{{ $selectedTournament->sport->nama_sport }} &bull; {{ $selectedTournament->year }}</p>
                     </div>
                 </div>
 

@@ -174,17 +174,25 @@ class CustomBracketController extends Controller
         $endDate = \Carbon\Carbon::parse($tournament->end_date);
         $totalDays = $endDate->diffInDays($startDate);
         
-        // Distribusi: Round 1 di awal, Final di akhir
-        $daysPerRound = $totalDays / ($numRounds + 1);
+        // Distribusi: Round 1 di start_date (day 0), Final di end_date
+        // Hitung jarak antar round
+        $daysPerRound = $numRounds > 1 ? $totalDays / ($numRounds - 1) : 0;
 
         // Buat matches dari Final ke Round 1
         for ($round = $numRounds; $round >= 1; $round--) {
             $numMatches = $bracketSize / pow(2, $round);
             $roundMatches[$round] = [];
             
-            // Hitung tanggal untuk round ini (Round 1 paling awal)
-            $roundDayOffset = ($numRounds - $round + 1) * $daysPerRound;
-            $roundDate = $startDate->copy()->addDays($roundDayOffset);
+            // Hitung tanggal untuk round ini
+            // Round 1 = day 0 (start_date)
+            // Round 2 = day 0 + daysPerRound
+            // Final = end_date
+            if ($round == 1) {
+                $roundDate = $startDate->copy();
+            } else {
+                $dayOffset = ($round - 1) * $daysPerRound;
+                $roundDate = $startDate->copy()->addDays($dayOffset);
+            }
 
             for ($matchNum = 1; $matchNum <= $numMatches; $matchNum++) {
                 $nextMatch = null;

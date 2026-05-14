@@ -35,16 +35,6 @@ class Pertandingan extends Model
         'match_date' => 'datetime',
     ];
 
-    /**
-     * Update status scheduled ke live secara otomatis jika waktu sudah terlewati.
-     */
-    public static function autoUpdateLiveStatus()
-    {
-        return self::where('status', 'scheduled')
-            ->where('waktu_tanding', '<=', now())
-            ->update(['status' => 'live']);
-    }
-
     public function sport(): BelongsTo
     {
         return $this->belongsTo(Sport::class);

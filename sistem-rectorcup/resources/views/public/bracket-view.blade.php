@@ -226,7 +226,7 @@
 
     {{-- Footer Note --}}
     <div class="text-center text-muted">
-        <small>Rector Cup {{ $tournament->year }} • {{ $tournament->sport->nama_sport }}</small>
+        <small>Rector Cup {{ $tournament->year }} &bull; {{ $tournament->sport->nama_sport }}</small>
     </div>
 </div>
 @endsection

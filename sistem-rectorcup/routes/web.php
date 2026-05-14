@@ -14,10 +14,10 @@ Route::get('/tournament/{tournament}/bracket', [CustomBracketController::class, 
 
 // API Polling — dipakai guest dashboard untuk update real-time tanpa WebSocket
 Route::get('/api/live-matches', function () {
-    \App\Models\Pertandingan::autoUpdateLiveStatus();
-    
     $matches = \App\Models\Pertandingan::with(['teamA', 'teamB', 'sport'])
         ->whereIn('status', ['live', 'scheduled'])
+        ->whereNotNull('team_a_id')
+        ->whereNotNull('team_b_id')
         ->orderBy('waktu_tanding', 'asc')
         ->get()
         ->map(function ($p) {
