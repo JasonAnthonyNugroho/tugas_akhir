@@ -44,6 +44,30 @@ Route::get('/api/live-matches', function () {
     ]);
 })->name('api.live-matches');
 
+// API Polling — dipakai halaman bracket publik untuk update real-time
+Route::get('/api/tournament/{tournament}/matches', function (\App\Models\Tournament $tournament) {
+    $matches = $tournament->pertandingans()
+        ->with(['teamA', 'teamB', 'winner'])
+        ->get()
+        ->map(function ($m) {
+            return [
+                'id'         => $m->id,
+                'round'      => $m->round,
+                'babak'      => $m->babak,
+                'status'     => $m->status,
+                'score_a'    => $m->score_a,
+                'score_b'    => $m->score_b,
+                'team_a'     => $m->teamA?->name ?? 'TBD',
+                'team_b'     => $m->teamB?->name ?? 'TBD',
+                'team_a_id'  => $m->team_a_id,
+                'team_b_id'  => $m->team_b_id,
+                'winner_id'  => $m->winner_id,
+            ];
+        });
+
+    return response()->json(['matches' => $matches, 'timestamp' => now()->toIso8601String()]);
+})->name('api.tournament.matches');
+
 // Jalur Autentikasi
 Route::middleware(['guest', PreventBackHistory::class])->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

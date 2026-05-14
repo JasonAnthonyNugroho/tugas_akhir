@@ -110,7 +110,7 @@
                             
                             <div class="d-flex flex-column gap-3">
                                 @foreach($matches->sortBy('match_number') as $match)
-                                    <div class="card border-0" style="background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden;
+                                    <div class="card border-0 bracket-match-card" data-match-id="{{ $match->id }}" style="background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden;
                                             @if($match->status === 'live') border: 1px solid #ef4444 !important; @endif">
                                         {{-- Header dengan Tanggal --}}
                                         <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background: rgba(255,255,255,0.03); gap: 8px;">
@@ -185,7 +185,7 @@
                     <h6 class="text-white font-weight-bold mb-3">
                         <i class="bi bi-award text-warning mr-2"></i>Perebutan Juara 3 (Bronze Match)
                     </h6>
-                    <div class="card border-0" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3) !important; border-radius: 8px; max-width: 300px;">
+                    <div class="card border-0 bracket-match-card" data-match-id="{{ $thirdPlaceMatch->id }}" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3) !important; border-radius: 8px; max-width: 300px;">
                         <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background: rgba(245, 158, 11, 0.1);">
                             <small class="text-warning font-weight-bold" style="font-size: 0.7rem;">BRONZE</small>
                             @if($thirdPlaceMatch->status === 'live')
@@ -238,13 +238,155 @@
         flex-direction: column;
         justify-content: center;
     }
-    
-    .gap-4 {
-        gap: 2rem;
+    .gap-4 { gap: 2rem; }
+    .gap-3 { gap: 1rem; }
+    @keyframes scoreFlash {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); color: #fbbf24; }
+        100% { transform: scale(1); }
     }
-    
-    .gap-3 {
-        gap: 1rem;
-    }
+    .score-flash { animation: scoreFlash 0.4s ease; }
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
 </style>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tournamentId = {{ $tournament->id }};
+    let pollInterval = null;
+
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;background:#10b981;color:#fff;padding:12px 20px;border-radius:12px;font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.3);animation:slideIn .3s ease';
+        t.innerHTML = '<i class="bi bi-bell-fill mr-2"></i>' + msg;
+        document.body.appendChild(t);
+        setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 3000);
+    }
+
+    function poll() {
+        fetch('/api/tournament/' + tournamentId + '/matches')
+            .then(r => r.json())
+            .then(data => {
+                let changed = false;
+                data.matches.forEach(m => {
+                    const card = document.querySelector(`.bracket-match-card[data-match-id="${m.id}"]`);
+                    if (!card) return;
+
+                    const rows = card.querySelectorAll('.d-flex.justify-content-between.align-items-center');
+                    // rows[0] = header, rows[1] = team A, rows[2] = team B
+                    const headerRow = rows[0];
+                    const teamARow = rows[1];
+                    const teamBRow = rows[2];
+                    if (!teamARow || !teamBRow) return;
+
+                    // Update scores
+                    const scoreA = teamARow.querySelector('span:last-child');
+                    const scoreB = teamBRow.querySelector('span:last-child');
+                    if (scoreA && m.status !== 'scheduled') {
+                        const newVal = String(m.score_a);
+                        if (scoreA.textContent.trim() !== newVal) {
+                            scoreA.textContent = newVal;
+                            scoreA.classList.add('score-flash');
+                            setTimeout(() => scoreA.classList.remove('score-flash'), 400);
+                            changed = true;
+                        }
+                    }
+                    if (scoreB && m.status !== 'scheduled') {
+                        const newVal = String(m.score_b);
+                        if (scoreB.textContent.trim() !== newVal) {
+                            scoreB.textContent = newVal;
+                            scoreB.classList.add('score-flash');
+                            setTimeout(() => scoreB.classList.remove('score-flash'), 400);
+                            changed = true;
+                        }
+                    }
+
+                    // Update team names (TBD → actual name when bracket advances)
+                    const nameA = teamARow.querySelector('span:first-child');
+                    const nameB = teamBRow.querySelector('span:first-child');
+                    if (nameA) {
+                        const cleanName = nameA.textContent.trim().replace(/\s+/g, ' ');
+                        if (cleanName !== m.team_a && m.team_a !== cleanName.split(' ')[0]) {
+                            nameA.innerHTML = m.team_a;
+                            changed = true;
+                        }
+                    }
+                    if (nameB) {
+                        const cleanName = nameB.textContent.trim().replace(/\s+/g, ' ');
+                        if (cleanName !== m.team_b && m.team_b !== cleanName.split(' ')[0]) {
+                            nameB.innerHTML = m.team_b;
+                            changed = true;
+                        }
+                    }
+
+                    // Update status badge in header
+                    const badge = headerRow ? headerRow.querySelector('.badge') : null;
+                    if (badge) {
+                        if (m.status === 'live' && !badge.classList.contains('badge-danger')) {
+                            badge.className = 'badge badge-danger flex-shrink-0';
+                            badge.style.cssText = 'font-size:0.65rem;padding:2px 6px';
+                            badge.textContent = 'LIVE';
+                            card.style.border = '1px solid #ef4444';
+                            changed = true;
+                        } else if (m.status === 'finished' && !badge.classList.contains('badge-success')) {
+                            badge.className = 'badge badge-success flex-shrink-0';
+                            badge.style.cssText = 'font-size:0.65rem;padding:2px 6px';
+                            badge.textContent = 'DONE';
+                            card.style.border = '';
+                            changed = true;
+                        }
+                    }
+
+                    // Update winner highlights
+                    if (m.winner_id) {
+                        if (m.winner_id === m.team_a_id) {
+                            teamARow.style.background = 'rgba(16, 185, 129, 0.15)';
+                            teamBRow.style.background = '';
+                            if (scoreA) { scoreA.style.color = '#10b981'; }
+                            if (scoreB) { scoreB.style.color = '#94a3b8'; }
+                            // Add trophy icon
+                            if (nameA && !nameA.querySelector('.bi-trophy-fill')) {
+                                nameA.innerHTML = m.team_a + ' <i class="bi bi-trophy-fill text-success ml-2" style="font-size:0.75rem"></i>';
+                            }
+                        } else if (m.winner_id === m.team_b_id) {
+                            teamBRow.style.background = 'rgba(16, 185, 129, 0.15)';
+                            teamARow.style.background = '';
+                            if (scoreB) { scoreB.style.color = '#10b981'; }
+                            if (scoreA) { scoreA.style.color = '#94a3b8'; }
+                            if (nameB && !nameB.querySelector('.bi-trophy-fill')) {
+                                nameB.innerHTML = m.team_b + ' <i class="bi bi-trophy-fill text-success ml-2" style="font-size:0.75rem"></i>';
+                            }
+                        }
+                    }
+                });
+
+                if (changed) showToast('Bracket diperbarui!');
+
+                // Also update stat cards
+                const allMatches = data.matches;
+                const finishedCount = allMatches.filter(m => m.status === 'finished').length;
+                const scheduledCount = allMatches.filter(m => m.status === 'scheduled').length;
+                const liveCount = allMatches.filter(m => m.status === 'live').length;
+                const statCards = document.querySelectorAll('.card.bg-dark .h4');
+                if (statCards[1]) statCards[1].textContent = finishedCount;
+                if (statCards[2]) statCards[2].textContent = scheduledCount;
+                if (statCards[3]) statCards[3].textContent = liveCount;
+            })
+            .catch(err => console.warn('Poll error:', err));
+    }
+
+    poll();
+    pollInterval = setInterval(poll, 5000);
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            clearInterval(pollInterval);
+        } else {
+            poll();
+            pollInterval = setInterval(poll, 5000);
+        }
+    });
+});
+</script>
 @endsection
