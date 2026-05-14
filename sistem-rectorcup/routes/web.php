@@ -12,6 +12,38 @@ Route::get('/history', [PertandinganController::class, 'history'])->name('histor
 Route::get('/pertandingan/{pertandingan}', [PertandinganController::class, 'show'])->name('pertandingan.show');
 Route::get('/tournament/{tournament}/bracket', [CustomBracketController::class, 'publicBracket'])->name('tournament.public.bracket');
 
+// API Polling — dipakai guest dashboard untuk update real-time tanpa WebSocket
+Route::get('/api/live-matches', function () {
+    \App\Models\Pertandingan::autoUpdateLiveStatus();
+    
+    $matches = \App\Models\Pertandingan::with(['teamA', 'teamB', 'sport'])
+        ->whereIn('status', ['live', 'scheduled'])
+        ->orderBy('waktu_tanding', 'asc')
+        ->get()
+        ->map(function ($p) {
+            return [
+                'id'          => $p->id,
+                'status'      => $p->status,
+                'score_a'     => $p->score_a,
+                'score_b'     => $p->score_b,
+                'team_a'      => $p->teamA?->name ?? 'TBD',
+                'team_b'      => $p->teamB?->name ?? 'TBD',
+                'team_a_id'   => $p->team_a_id,
+                'team_b_id'   => $p->team_b_id,
+                'sport'       => $p->sport?->nama_sport,
+                'sport_icon'  => $p->sport?->icon ?? 'bi-trophy',
+                'lokasi'      => $p->lokasi,
+                'waktu'       => $p->waktu_tanding->format('d M, H:i'),
+                'detail_url'  => route('pertandingan.show', $p->id),
+            ];
+        });
+
+    return response()->json([
+        'matches'   => $matches,
+        'timestamp' => now()->toIso8601String(),
+    ]);
+})->name('api.live-matches');
+
 // Jalur Autentikasi
 Route::middleware(['guest', PreventBackHistory::class])->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

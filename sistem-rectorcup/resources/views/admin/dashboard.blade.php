@@ -47,97 +47,185 @@
         <h5 class="text-white font-weight-bold mb-4"><i class="bi bi-trophy text-warning mr-2"></i> Tournament & Bracket Aktif</h5>
         <div class="row">
             @forelse($tournaments as $tournament)
-                <div class="col-md-6 mb-4">
-                    <div class="card border-0 h-100" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border) !important; border-radius: 24px;">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-4">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center mr-3"
-                                        style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #a855f7) !important;">
-                                        <i class="bi {{ $tournament->sport->icon ?? 'bi-diagram-3' }} text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="font-weight-bold text-white mb-0">{{ $tournament->name }}</h6>
-                                        <span class="text-muted small text-uppercase">{{ $tournament->sport->nama_sport }} • {{ $tournament->year }}</span>
-                                        @php
-                                            $tLokasi = $tournament->pertandingans->whereNotIn('lokasi', ['TBA', ''])->pluck('lokasi')->unique()->first();
-                                        @endphp
+                @php
+                    $tMatches = $groupedMatches->get('tournament_' . $tournament->id, collect());
+                    $totalMatches = $tMatches->count();
+                    $finishedMatches = $tMatches->where('status', 'finished')->count();
+                    $liveMatches = $tMatches->where('status', 'live')->count();
+                    $scheduledMatches = $tMatches->where('status', 'scheduled')->count();
+                    $progressPercent = $totalMatches > 0 ? round(($finishedMatches / $totalMatches) * 100) : 0;
+                    $tLokasi = $tournament->pertandingans->whereNotIn('lokasi', ['TBA', ''])->pluck('lokasi')->unique()->first();
+                    // Group matches by round (babak)
+                    $matchesByRound = $tMatches->groupBy('babak');
+                @endphp
+                <div class="col-lg-6 mb-4">
+                    <div class="tournament-card">
+                        {{-- Card Header --}}
+                        <div class="tournament-card-header">
+                            <div class="d-flex align-items-center flex-grow-1 min-width-0">
+                                <div class="tournament-sport-icon">
+                                    <i class="bi {{ $tournament->sport->icon ?? 'bi-diagram-3' }}"></i>
+                                </div>
+                                <div class="min-width-0 flex-grow-1">
+                                    <h6 class="tournament-card-title">{{ $tournament->name }}</h6>
+                                    <div class="tournament-card-meta">
+                                        <span class="tournament-tag tournament-tag-sport">{{ $tournament->sport->nama_sport }}</span>
+                                        <span class="tournament-tag tournament-tag-year">{{ $tournament->year }}</span>
                                         @if($tLokasi)
-                                            <br><span class="text-muted small"><i class="bi bi-geo-alt mr-1"></i>{{ $tLokasi }}</span>
+                                            <span class="tournament-location"><i class="bi bi-geo-alt-fill"></i> {{ $tLokasi }}</span>
                                         @endif
                                     </div>
                                 </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-link text-muted p-0" data-toggle="dropdown">
-                                        <i class="bi bi-three-dots-vertical h5 mb-0"></i>
+                            </div>
+                            <div class="dropdown">
+                                <button class="tournament-kebab" data-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right tournament-dropdown">
+                                    <a href="{{ route('admin.tournament.bracket.view', $tournament) }}" class="dropdown-item">
+                                        <i class="bi bi-eye mr-2"></i> View Full Bracket
+                                    </a>
+                                    <button type="button" class="dropdown-item"
+                                            data-toggle="modal" data-target="#editTournament{{ $tournament->id }}">
+                                        <i class="bi bi-pencil mr-2"></i> Edit Tournament
                                     </button>
-                                    <div class="dropdown-menu dropdown-menu-right bg-dark border-secondary shadow-lg">
-                                        <a href="{{ route('admin.tournament.bracket.view', $tournament) }}" class="dropdown-item text-white small">
-                                            <i class="bi bi-eye mr-2"></i> View Bracket
-                                        </a>
-                                        <button type="button" class="dropdown-item text-white small"
-                                                data-toggle="modal" data-target="#editTournament{{ $tournament->id }}">
-                                            <i class="bi bi-pencil mr-2"></i> Edit Tournament
+                                    <div class="dropdown-divider"></div>
+                                    <form action="{{ route('admin.bracket.reroll', $tournament->id) }}" method="POST" onsubmit="return confirm('Reroll akan mengacak ulang semua tim di bracket. Lanjutkan?')">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item text-warning">
+                                            <i class="bi bi-shuffle mr-2"></i> Reroll Bracket
                                         </button>
-                                        <div class="dropdown-divider border-secondary"></div>
-                                        <form action="{{ route('admin.bracket.reroll', $tournament->id) }}" method="POST" onsubmit="return confirm('Reroll akan mengacak ulang semua tim di bracket. Lanjutkan?')">
-                                            @csrf
-                                            <button type="submit" class="dropdown-item text-warning small font-weight-bold">
-                                                <i class="bi bi-shuffle mr-2"></i> Reroll Bracket
-                                            </button>
-                                        </form>
-                                        <div class="dropdown-divider border-secondary"></div>
-                                        <form action="{{ route('admin.tournament.delete', $tournament) }}" method="POST" onsubmit="return confirm('Hapus tournament ini beserta semua pertandingannya?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="dropdown-item text-danger small font-weight-bold">
-                                                <i class="bi bi-trash mr-2"></i> Hapus Tournament
-                                            </button>
-                                        </form>
-                                    </div>
+                                    </form>
+                                    <div class="dropdown-divider"></div>
+                                    <form action="{{ route('admin.tournament.delete', $tournament) }}" method="POST" onsubmit="return confirm('Hapus tournament ini beserta semua pertandingannya?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-trash mr-2"></i> Hapus Tournament
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="table-responsive mb-3" style="max-height: 300px; overflow-y: auto;">
-                                <table class="table table-sm table-borderless text-white mb-0">
-                                    <thead>
-                                        <tr class="text-muted small text-uppercase">
-                                            <th>Babak</th>
-                                            <th>Pertandingan</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php 
-                                            $tMatches = $groupedMatches->get('tournament_' . $tournament->id, collect());
-                                        @endphp
-                                        @foreach($tMatches as $p)
-                                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                                <td class="small align-middle text-muted">{{ $p->babak }}</td>
-                                                <td class="small align-middle">
-                                                    <span class="{{ $p->team_a_id ? 'text-white' : 'text-muted italic' }}">{{ $p->teamA?->name ?? 'TBD' }}</span>
-                                                    <span class="text-muted mx-1">vs</span>
-                                                    <span class="{{ $p->team_b_id ? 'text-white' : 'text-muted italic' }}">{{ $p->teamB?->name ?? 'TBD' }}</span>
-                                                </td>
-                                                <td class="align-middle">
-                                                    @if($p->status == 'live')
-                                                        <span class="badge badge-success small">LIVE</span>
-                                                    @elseif($p->status == 'finished')
-                                                        <span class="badge badge-secondary small">DONE</span>
-                                                    @else
-                                                        <span class="badge badge-dark small">SCHED</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                        {{-- Progress & Stats Bar --}}
+                        <div class="tournament-progress-section">
+                            <div class="tournament-stats-row">
+                                <div class="tournament-stat">
+                                    <span class="tournament-stat-value">{{ $totalMatches }}</span>
+                                    <span class="tournament-stat-label">Total</span>
+                                </div>
+                                @if($liveMatches > 0)
+                                <div class="tournament-stat tournament-stat-live">
+                                    <span class="tournament-stat-value">
+                                        <span class="live-dot-mini"></span>{{ $liveMatches }}
+                                    </span>
+                                    <span class="tournament-stat-label">Live</span>
+                                </div>
+                                @endif
+                                <div class="tournament-stat tournament-stat-done">
+                                    <span class="tournament-stat-value">{{ $finishedMatches }}</span>
+                                    <span class="tournament-stat-label">Selesai</span>
+                                </div>
+                                <div class="tournament-stat tournament-stat-sched">
+                                    <span class="tournament-stat-value">{{ $scheduledMatches }}</span>
+                                    <span class="tournament-stat-label">Terjadwal</span>
+                                </div>
+                                <div class="tournament-progress-pct">{{ $progressPercent }}%</div>
                             </div>
+                            <div class="tournament-progress-bar">
+                                <div class="tournament-progress-fill" style="width: {{ $progressPercent }}%"></div>
+                                @if($liveMatches > 0 && $totalMatches > 0)
+                                    <div class="tournament-progress-live" style="left: {{ $progressPercent }}%; width: {{ round(($liveMatches / $totalMatches) * 100) }}%"></div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Match Cards by Round --}}
+                        <div class="tournament-matches-area">
+                            @foreach($matchesByRound as $roundName => $roundMatches)
+                                <div class="tournament-round-group">
+                                    <div class="tournament-round-label">
+                                        <i class="bi bi-layer-forward"></i>
+                                        <span>{{ $roundName }}</span>
+                                        <span class="tournament-round-count">{{ $roundMatches->count() }} match</span>
+                                    </div>
+                                    <div class="tournament-match-list">
+                                        @foreach($roundMatches as $p)
+                                            <div class="tmatch-card {{ $p->status }}">
+                                                <div class="tmatch-teams">
+                                                    <div class="tmatch-team {{ $p->winner_id && $p->winner_id == $p->team_a_id ? 'winner' : '' }} {{ $p->winner_id && $p->winner_id != $p->team_a_id ? 'loser' : '' }}">
+                                                        <span class="tmatch-team-name {{ !$p->team_a_id ? 'tbd' : '' }}">
+                                                            {{ $p->teamA?->name ?? 'TBD' }}
+                                                        </span>
+                                                        @if($p->status !== 'scheduled')
+                                                            <span class="tmatch-score">{{ $p->score_a ?? 0 }}</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="tmatch-vs">
+                                                        @if($p->status == 'live')
+                                                            <span class="tmatch-live-badge"><span class="live-dot-anim"></span>LIVE</span>
+                                                        @elseif($p->status == 'finished')
+                                                            <span class="tmatch-done-badge"><i class="bi bi-check-circle-fill"></i></span>
+                                                        @else
+                                                            <span class="tmatch-vs-text">VS</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="tmatch-team {{ $p->winner_id && $p->winner_id == $p->team_b_id ? 'winner' : '' }} {{ $p->winner_id && $p->winner_id != $p->team_b_id ? 'loser' : '' }}">
+                                                        <span class="tmatch-team-name {{ !$p->team_b_id ? 'tbd' : '' }}">
+                                                            {{ $p->teamB?->name ?? 'TBD' }}
+                                                        </span>
+                                                        @if($p->status !== 'scheduled')
+                                                            <span class="tmatch-score">{{ $p->score_b ?? 0 }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                {{-- Action Button --}}
+                                                <div class="tmatch-action">
+                                                    @if($p->status == 'live')
+                                                        <a href="{{ route('admin.skor') }}#match-{{ $p->id }}" class="tmatch-action-btn tmatch-action-live" title="Kelola Skor">
+                                                            <i class="bi bi-sliders2"></i>
+                                                        </a>
+                                                    @elseif($p->status == 'finished')
+                                                        <a href="{{ route('admin.skor') }}#match-{{ $p->id }}" class="tmatch-action-btn tmatch-action-done" title="Lihat Detail">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                    @elseif($p->team_a_id && $p->team_b_id)
+                                                        <form action="{{ route('pertandingan.bulk-live') }}" method="POST" class="d-inline" onsubmit="return confirm('Mulai pertandingan {{ $p->teamA?->name }} vs {{ $p->teamB?->name }}?')">
+                                                            @csrf
+                                                            <input type="hidden" name="match_ids[]" value="{{ $p->id }}">
+                                                            <button type="submit" class="tmatch-action-btn tmatch-action-start" title="Mulai Live">
+                                                                <i class="bi bi-play-fill"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Card Footer --}}
+                        <div class="tournament-card-footer">
+                            <a href="{{ route('admin.tournament.bracket.view', $tournament) }}" class="tournament-view-btn">
+                                <i class="bi bi-diagram-3 mr-1"></i> View Full Bracket
+                                <i class="bi bi-arrow-right ml-1"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
             @empty
                 <div class="col-12">
-                    <p class="text-muted text-center py-4 bg-dark-subtle rounded-xl" style="border: 1px dashed var(--glass-border);">Belum ada tournament aktif.</p>
+                    <div class="tournament-empty">
+                        <div class="tournament-empty-icon">
+                            <i class="bi bi-trophy"></i>
+                        </div>
+                        <p class="tournament-empty-text">Belum ada tournament aktif</p>
+                        <a href="{{ route('admin.tournament.bracket.builder') }}" class="btn btn-primary-action btn-sm mt-2">
+                            <i class="bi bi-plus-lg mr-1"></i> Buat Tournament
+                        </a>
+                    </div>
                 </div>
             @endforelse
         </div>
@@ -400,6 +488,581 @@
 
 @section('styles')
 <style>
+    /* ─────────── Tournament Card — Premium Redesign ─────────── */
+    .tournament-card {
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.8));
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+    .tournament-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+        opacity: 0.7;
+    }
+    .tournament-card:hover {
+        border-color: rgba(99, 102, 241, 0.35);
+        box-shadow: 0 8px 40px rgba(99, 102, 241, 0.15), 0 4px 24px rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* Card Header */
+    .tournament-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px 14px;
+        gap: 12px;
+    }
+    .tournament-sport-icon {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border-radius: 12px;
+        margin-right: 14px;
+        font-size: 1.2rem;
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        transition: transform 0.3s ease;
+    }
+    .tournament-card:hover .tournament-sport-icon {
+        transform: scale(1.08) rotate(-3deg);
+    }
+    .tournament-card-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin: 0 0 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .tournament-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .tournament-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .tournament-tag-sport {
+        background: rgba(99, 102, 241, 0.15);
+        color: #a5b4fc;
+        border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    .tournament-tag-year {
+        background: rgba(168, 85, 247, 0.12);
+        color: #c4b5fd;
+        border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+    .tournament-location {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .tournament-location i { font-size: 0.65rem; color: #64748b; }
+
+    /* Kebab menu */
+    .tournament-kebab {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-size: 1rem;
+    }
+    .tournament-kebab:hover {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: rgba(99, 102, 241, 0.3);
+        color: #c7d2fe;
+    }
+    .tournament-dropdown {
+        background: #131a2e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 6px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        min-width: 200px;
+    }
+    .tournament-dropdown .dropdown-item {
+        color: #cbd5e1;
+        font-size: 0.82rem;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.15s;
+    }
+    .tournament-dropdown .dropdown-item:hover {
+        background: rgba(99, 102, 241, 0.12);
+        color: #fff;
+    }
+    .tournament-dropdown .dropdown-item.text-warning:hover {
+        background: rgba(245, 158, 11, 0.12);
+    }
+    .tournament-dropdown .dropdown-item.text-danger:hover {
+        background: rgba(239, 68, 68, 0.12);
+    }
+    .tournament-dropdown .dropdown-divider {
+        border-color: rgba(255, 255, 255, 0.06);
+        margin: 4px 0;
+    }
+    .tournament-dropdown form { margin: 0; }
+
+    /* ─── Progress & Stats ─── */
+    .tournament-progress-section {
+        padding: 0 20px 14px;
+    }
+    .tournament-stats-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    .tournament-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 10px;
+        min-width: 54px;
+    }
+    .tournament-stat-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1;
+    }
+    .tournament-stat-label {
+        font-size: 0.6rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 2px;
+    }
+    .tournament-stat-live .tournament-stat-value { color: #ef4444; }
+    .tournament-stat-live { border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.06); }
+    .tournament-stat-done .tournament-stat-value { color: #10b981; }
+    .tournament-stat-done { border-color: rgba(16, 185, 129, 0.15); background: rgba(16, 185, 129, 0.05); }
+    .tournament-stat-sched .tournament-stat-value { color: #94a3b8; }
+    .tournament-progress-pct {
+        margin-left: auto;
+        font-size: 1.1rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .live-dot-mini {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ef4444;
+        display: inline-block;
+        animation: livePulse2 1.5s infinite;
+        box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+    }
+
+    /* Progress bar */
+    .tournament-progress-bar {
+        height: 5px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 10px;
+        overflow: visible;
+        position: relative;
+    }
+    .tournament-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        border-radius: 10px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    .tournament-progress-fill::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: -2px;
+        width: 9px;
+        height: 9px;
+        background: #34d399;
+        border-radius: 50%;
+        box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+    }
+    .tournament-progress-live {
+        height: 100%;
+        background: rgba(239, 68, 68, 0.6);
+        border-radius: 10px;
+        position: absolute;
+        top: 0;
+        animation: livePulse2 2s infinite;
+    }
+    @keyframes livePulse2 {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    /* ─── Match Cards Area ─── */
+    .tournament-matches-area {
+        padding: 0 20px;
+        max-height: 340px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .tournament-matches-area::-webkit-scrollbar { width: 5px; }
+    .tournament-matches-area::-webkit-scrollbar-track { background: transparent; }
+    .tournament-matches-area::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.3);
+        border-radius: 10px;
+    }
+    .tournament-matches-area::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.6);
+    }
+
+    /* Round group */
+    .tournament-round-group {
+        margin-bottom: 14px;
+    }
+    .tournament-round-group:last-child { margin-bottom: 6px; }
+    .tournament-round-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #818cf8;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 6px 0;
+        margin-bottom: 6px;
+        border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    }
+    .tournament-round-label i {
+        font-size: 0.78rem;
+        color: #6366f1;
+    }
+    .tournament-round-count {
+        margin-left: auto;
+        font-weight: 500;
+        color: #475569;
+        text-transform: none;
+        letter-spacing: 0;
+        font-size: 0.65rem;
+    }
+
+    /* Match list grid */
+    .tournament-match-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    /* Individual match card */
+    .tmatch-card {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 10px;
+        padding: 8px 12px;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .tmatch-card:hover {
+        background: rgba(99, 102, 241, 0.06);
+        border-color: rgba(99, 102, 241, 0.2);
+        transform: translateX(2px);
+    }
+    .tmatch-card.live {
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.05);
+        animation: liveMatchGlow 2.5s infinite;
+    }
+    @keyframes liveMatchGlow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.15); }
+        50% { box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.1); }
+    }
+    .tmatch-card.finished {
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    /* Teams layout */
+    .tmatch-teams {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+    }
+    .tmatch-team {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 0;
+        gap: 6px;
+    }
+    .tmatch-team:last-child {
+        flex-direction: row-reverse;
+    }
+    .tmatch-team:last-child .tmatch-team-name {
+        text-align: right;
+    }
+    .tmatch-team-name {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #e2e8f0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
+    .tmatch-team-name.tbd {
+        color: #475569;
+        font-style: italic;
+        font-weight: 500;
+    }
+    .tmatch-team.winner .tmatch-team-name {
+        color: #34d399;
+    }
+    .tmatch-team.loser .tmatch-team-name {
+        color: #64748b;
+        opacity: 0.7;
+    }
+    .tmatch-score {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #cbd5e1;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 8px;
+        border-radius: 6px;
+        min-width: 28px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .tmatch-team.winner .tmatch-score {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.12);
+    }
+    .tmatch-team.loser .tmatch-score {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.08);
+    }
+
+    /* VS separator */
+    .tmatch-vs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        min-width: 38px;
+    }
+    .tmatch-vs-text {
+        font-size: 0.62rem;
+        font-weight: 800;
+        color: #475569;
+        letter-spacing: 0.1em;
+        padding: 3px 6px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 4px;
+    }
+    .tmatch-live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        padding: 3px 8px;
+        border-radius: 20px;
+        letter-spacing: 0.08em;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        animation: badgePulse 2s infinite;
+    }
+    @keyframes badgePulse {
+        0%, 100% { box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 2px 16px rgba(239, 68, 68, 0.6); }
+    }
+    .live-dot-anim {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #fff;
+        animation: livePulse2 1s infinite;
+    }
+    .tmatch-done-badge {
+        color: #10b981;
+        font-size: 0.9rem;
+    }
+
+    /* ─── Match Action Buttons ─── */
+    .tmatch-action {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+    }
+    .tmatch-action form { margin: 0; }
+    .tmatch-action-btn {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 0;
+    }
+    .tmatch-action-btn:hover {
+        transform: scale(1.12);
+        text-decoration: none;
+    }
+    /* Live → Kelola Skor */
+    .tmatch-action-live {
+        color: #f59e0b;
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.25);
+    }
+    .tmatch-action-live:hover {
+        background: rgba(245, 158, 11, 0.25);
+        border-color: rgba(245, 158, 11, 0.5);
+        color: #fbbf24;
+        box-shadow: 0 2px 10px rgba(245, 158, 11, 0.25);
+    }
+    /* Done → Lihat Detail */
+    .tmatch-action-done {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.08);
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+    .tmatch-action-done:hover {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: rgba(16, 185, 129, 0.4);
+        color: #34d399;
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+    }
+    /* Scheduled → Start Live */
+    .tmatch-action-start {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+        border-color: rgba(16, 185, 129, 0.25);
+    }
+    .tmatch-action-start:hover {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-color: #10b981;
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+    }
+
+    /* ─── Card Footer ─── */
+    .tournament-card-footer {
+        padding: 12px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.15);
+    }
+    .tournament-view-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 100%;
+        padding: 9px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #a5b4fc;
+        background: rgba(99, 102, 241, 0.08);
+        border: 1px solid rgba(99, 102, 241, 0.18);
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .tournament-view-btn:hover {
+        background: rgba(99, 102, 241, 0.18);
+        border-color: rgba(99, 102, 241, 0.35);
+        color: #c7d2fe;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.2);
+    }
+    .tournament-view-btn .bi-arrow-right {
+        transition: transform 0.2s;
+    }
+    .tournament-view-btn:hover .bi-arrow-right {
+        transform: translateX(3px);
+    }
+
+    /* ─── Empty State ─── */
+    .tournament-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 48px 20px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px dashed rgba(99, 102, 241, 0.2);
+        border-radius: 20px;
+    }
+    .tournament-empty-icon {
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.08));
+        border-radius: 20px;
+        font-size: 1.8rem;
+        color: #6366f1;
+        margin-bottom: 14px;
+    }
+    .tournament-empty-text {
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .min-width-0 { min-width: 0; }
+
     /* Fix untuk modal Edit Pertandingan - mencegah screen gelap dan cursor type */
     /* Hapus aturan z-index global untuk modal agar Bootstrap bisa mengelola stacking secara normal. */
     

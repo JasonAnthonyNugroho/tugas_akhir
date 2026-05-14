@@ -171,32 +171,27 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label class="small font-weight-bold text-muted text-uppercase mb-2">Status</label>
-                                        <select name="status" class="form-control">
-                                            <option value="live" selected>TETAP LIVE</option>
-                                            <option value="finished">SELESAI (ARCHIVE)</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-12 mb-3">
                                         <label class="small font-weight-bold text-muted text-uppercase mb-2">
                                             <i class="bi bi-info-circle mr-1"></i> Keterangan Bracket
                                         </label>
                                         <input type="text" name="keterangan" class="form-control" 
-                                            placeholder="Contoh: Badminton Ganda Putra, Badminton Ganda Putri, dll."
+                                            placeholder="Contoh: Badminton Ganda Putra, dll."
                                             value="{{ $p->keterangan ?? '' }}">
-                                        <small class="text-muted mt-1 d-block">
-                                            <i class="bi bi-lightbulb mr-1"></i> 
-                                            Keterangan akan ditampilkan di bracket untuk membantu peserta memahami jenis pertandingan.
-                                        </small>
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary btn-block font-weight-bold mt-2 py-3 shadow-lg">
-                                    <i class="bi bi-cloud-arrow-up-fill mr-2"></i> UPDATE SKOR SEKARANG
-                                </button>
+                                {{-- Hidden status field, default = live --}}
+                                <input type="hidden" name="status" id="statusField_{{ $p->id }}" value="live">
+
+                                <div class="d-flex mt-2" style="gap: 10px;">
+                                    <button type="submit" class="btn btn-primary flex-fill font-weight-bold py-3 shadow-lg skor-btn-update">
+                                        <i class="bi bi-cloud-arrow-up-fill mr-2"></i> Update Skor
+                                    </button>
+                                    <button type="button" class="btn flex-fill font-weight-bold py-3 shadow-lg skor-btn-finish"
+                                            onclick="confirmFinish({{ $p->id }}, '{{ addslashes($p->teamA?->name ?? 'TBD') }}', '{{ addslashes($p->teamB?->name ?? 'TBD') }}')">
+                                        <i class="bi bi-flag-fill mr-2"></i> Selesaikan
+                                    </button>
+                                </div>
                                 
                                 @if(session('success') && session('updated_id') == $p->id)
                                     <div class="alert alert-success mt-3 mb-0 py-2 small border-0 text-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 12px;">
@@ -408,6 +403,37 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+
+        /* Action buttons for score cards */
+        .skor-btn-update {
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            border: none;
+            color: #fff;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .skor-btn-update:hover {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            color: #fff;
+        }
+        .skor-btn-finish {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .skor-btn-finish:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: #ef4444;
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+        }
     </style>
 
     <script>
@@ -433,6 +459,34 @@
                 input.value = val - 1;
             }
             syncDownButton(id);
+        }
+
+        function confirmFinish(matchId, teamA, teamB) {
+            Swal.fire({
+                title: 'Selesaikan Pertandingan?',
+                html: `<div style="margin-top:8px">
+                    <p style="font-size:1.05rem; margin-bottom:6px;"><strong>${teamA}</strong> <span style="color:#64748b">vs</span> <strong>${teamB}</strong></p>
+                    <p style="color:#94a3b8; font-size:0.85rem;">Skor akan dikunci dan pertandingan akan diarsipkan. Pemenang akan otomatis maju ke babak selanjutnya (jika ada).</p>
+                </div>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#475569',
+                confirmButtonText: '<i class="bi bi-flag-fill mr-1"></i> Ya, Selesaikan!',
+                cancelButtonText: 'Batal',
+                background: '#0f172a',
+                color: '#f1f5f9',
+                customClass: {
+                    popup: 'swal-dark-popup',
+                    confirmButton: 'swal-confirm-danger',
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const statusField = document.getElementById('statusField_' + matchId);
+                    statusField.value = 'finished';
+                    statusField.closest('form').submit();
+                }
+            });
         }
 
         // Sinkron saat user mengetik langsung di input
@@ -516,5 +570,27 @@
                 alertDiv.remove();
             }, 3000);
         }
+
+        // Scroll to match when navigating from dashboard with #match-{id}
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#match-')) {
+                const matchId = hash.replace('#match-', '');
+                const target = document.querySelector(`[data-match-id="${matchId}"]`);
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Highlight animation
+                        target.style.transition = 'all 0.4s ease';
+                        target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.5), 0 4px 20px rgba(99, 102, 241, 0.3)';
+                        target.style.transform = 'scale(1.01)';
+                        setTimeout(() => {
+                            target.style.boxShadow = '';
+                            target.style.transform = '';
+                        }, 2500);
+                    }, 500);
+                }
+            }
+        });
     </script>
 @endsection
