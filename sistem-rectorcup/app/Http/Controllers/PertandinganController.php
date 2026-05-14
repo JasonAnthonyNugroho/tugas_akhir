@@ -267,6 +267,11 @@ class PertandinganController extends Controller
 
     public function updateScore(Request $request, Pertandingan $pertandingan)
     {
+        // Cegah update skor jika salah satu tim masih TBD
+        if (!$pertandingan->team_a_id || !$pertandingan->team_b_id) {
+            return back()->with('error', 'Tidak bisa update skor — salah satu tim masih TBD. Selesaikan pertandingan sebelumnya terlebih dahulu.');
+        }
+
         $request->validate([
             'score_a' => 'required|integer',
             'score_b' => 'required|integer',

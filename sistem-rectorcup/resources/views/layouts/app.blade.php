@@ -14,44 +14,27 @@
     <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
 
     <script>
-        // Inisialisasi Laravel Echo
-        window.Pusher = Pusher;
+        // Inisialisasi Laravel Echo (wrapped in try-catch — non-critical, polling is primary)
+        try {
+            window.Pusher = Pusher;
 
-        // Ambil konfigurasi dari Laravel ke JS dengan aman untuk menghindari error IDE
-        const reverbKey = "{{ config('broadcasting.connections.reverb.key') }}";
-        const reverbHost = "{{ config('broadcasting.connections.reverb.options.host') }}";
-        const reverbPort = "{{ config('broadcasting.connections.reverb.options.port', 8080) }}";
-        const reverbScheme = "{{ config('broadcasting.connections.reverb.options.scheme', 'http') }}";
+            const reverbKey = "{{ config('broadcasting.connections.reverb.key') }}";
+            const reverbHost = "{{ config('broadcasting.connections.reverb.options.host') }}";
+            const reverbPort = "{{ config('broadcasting.connections.reverb.options.port', 8080) }}";
+            const reverbScheme = "{{ config('broadcasting.connections.reverb.options.scheme', 'http') }}";
 
-        window.Echo = new Echo({
-            broadcaster: 'reverb',
-            key: reverbKey,
-            wsHost: reverbHost,
-            wsPort: parseInt(reverbPort),
-            wssPort: parseInt(reverbPort),
-            forceTLS: reverbScheme === 'https',
-            enabledTransports: ['ws', 'wss'],
-        });
-        
-        // Debug: Monitor Reverb connection status
-        window.Echo.connector.pusher.connection.bind('connected', function() {
-            console.log('Reverb: Connected successfully!');
-        });
-        
-        window.Echo.connector.pusher.connection.bind('disconnected', function() {
-            console.warn('Reverb: Disconnected!');
-        });
-        
-        window.Echo.connector.pusher.connection.bind('error', function(err) {
-            console.error('Reverb: Connection error:', err);
-        });
-        
-        console.log('Reverb initialized with config:', {
-            key: reverbKey,
-            host: reverbHost,
-            port: reverbPort,
-            scheme: reverbScheme
-        });
+            window.Echo = new Echo({
+                broadcaster: 'reverb',
+                key: reverbKey,
+                wsHost: reverbHost,
+                wsPort: parseInt(reverbPort),
+                wssPort: parseInt(reverbPort),
+                forceTLS: reverbScheme === 'https',
+                enabledTransports: ['ws', 'wss'],
+            });
+        } catch (e) {
+            console.warn('Reverb init skipped:', e.message);
+        }
     </script>
     <title>Rector Cup - @yield('title')</title>
     <style>

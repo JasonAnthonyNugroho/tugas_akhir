@@ -52,6 +52,21 @@
                                 @csrf
                                 @method('PATCH')
 
+                                @if(!$p->team_a_id || !$p->team_b_id)
+                                    {{-- TBD Warning — disable all score controls --}}
+                                    <div class="text-center py-5 px-3">
+                                        <div class="d-inline-flex align-items-center justify-content-center mb-3" 
+                                             style="width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.15);">
+                                            <i class="bi bi-exclamation-triangle text-warning h4 mb-0"></i>
+                                        </div>
+                                        <h6 class="text-warning font-weight-bold mb-2">Tim Belum Lengkap</h6>
+                                        <p class="text-muted small mb-0" style="max-width: 300px; margin: 0 auto;">
+                                            {{ !$p->team_a_id ? 'Tim A' : '' }}{{ !$p->team_a_id && !$p->team_b_id ? ' & ' : '' }}{{ !$p->team_b_id ? 'Tim B' : '' }} 
+                                            masih <strong>TBD</strong>. Selesaikan pertandingan babak sebelumnya terlebih dahulu.
+                                        </p>
+                                    </div>
+                                @else
+
                                 <div class="bg-dark-subtle rounded-xl p-4 mb-4"
                                     style="background: rgba(15, 23, 42, 0.3); border-radius: 20px; border: 1px solid var(--glass-border);">
                                     @if(strtoupper($p->sport->nama_sport ?? '') == 'PUBG MOBILE')
@@ -197,6 +212,7 @@
                                     <div class="alert alert-success mt-3 mb-0 py-2 small border-0 text-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 12px;">
                                         <i class="bi bi-check-circle-fill mr-1"></i> Data sudah berhasil terupdate.
                                     </div>
+                                @endif
                                 @endif
                             </form>
                         </div>
