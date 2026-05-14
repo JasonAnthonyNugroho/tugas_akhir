@@ -109,7 +109,7 @@
                                     </div>
                                     <div>
                                         <h6 class="font-weight-bold text-white mb-0">{{ $tournament->name }}</h6>
-                                        <small class="text-muted">{{ $tournament->sport->nama_sport }} â€¢ {{ $tournament->year }}</small>
+                                        <small class="text-muted">{{ $tournament->sport->nama_sport }} • {{ $tournament->year }}</small>
                                     </div>
                                 </div>
                                 
