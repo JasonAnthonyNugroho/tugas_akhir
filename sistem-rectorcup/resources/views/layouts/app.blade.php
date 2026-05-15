@@ -494,6 +494,46 @@
             });
         });
     </script>
+
+    {{--
+        Global Reverb Listener — Hybrid Realtime Architecture
+        -------------------------------------------------------
+        WebSocket (primary): broadcast event dari server ke semua client
+        Polling (fallback):  sinkronisasi dashboard setiap 5 detik
+
+        Listener ini dipasang global di semua halaman sehingga:
+        - Dashboard publik, admin, bracket, history — semua reaktif
+        - Tidak perlu duplikasi listener per halaman
+        - safeReload() mencegah reload spam jika event datang beruntun
+    --}}
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof Echo === 'undefined') return;
+
+        // Debounce: cegah reload spam jika beberapa event datang bersamaan
+        let reloading = false;
+        function safeReload() {
+            if (reloading) return;
+            reloading = true;
+            location.reload();
+        }
+
+        Echo.channel('scores')
+            // Status berubah (scheduled → live, live → finished)
+            // Reload agar section DOM (Live/Scheduled/Tournament) sinkron dengan server
+            .listen('.match.status.updated', function (data) {
+                console.log('[WS] match.status.updated:', data.status, '| match id:', data.id);
+                safeReload();
+            })
+            // Pertandingan baru dibuat
+            .listen('.match.created', function (data) {
+                console.log('[WS] match.created:', data.id);
+                safeReload();
+            });
+            // Catatan: .score.updated TIDAK trigger reload
+            // karena update skor ditangani DOM mutation langsung di dashboard polling
+    });
+    </script>
 </body>
 
 </html>

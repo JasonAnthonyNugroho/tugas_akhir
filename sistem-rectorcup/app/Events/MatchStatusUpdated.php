@@ -22,14 +22,8 @@ class MatchStatusUpdated implements ShouldBroadcast
     public function __construct($matchId, $status, $data = [])
     {
         $this->matchId = $matchId;
-        $this->status = $status;
-        $this->data = $data;
-        
-        \Log::info('MatchStatusUpdated event created', [
-            'match_id' => $matchId,
-            'status' => $status,
-            'data' => $data,
-        ]);
+        $this->status  = $status;
+        $this->data    = $data;
     }
 
     /**
