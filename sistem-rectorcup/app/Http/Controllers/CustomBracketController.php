@@ -71,13 +71,6 @@ class CustomBracketController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug: Log tanggal yang diterima
-        \Log::info('Tournament Store - Received dates:', [
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'all_request' => $request->all()
-        ]);
-
         // Arrangement dikirim sebagai JSON string dari JavaScript, decode dulu
         if (is_string($request->arrangement)) {
             $request->merge(['arrangement' => json_decode($request->arrangement, true)]);
@@ -86,7 +79,7 @@ class CustomBracketController extends Controller
         $request->validate([
             'tournament_name'    => 'required|string|max:255',
             'sport_id'           => 'required|exists:sports,id',
-            'arrangement'        => 'required|array', // Format: [match_index => [team_a_id, team_b_id]]
+            'arrangement'        => 'required|array',
             'bracket_size'       => 'required|integer|in:4,8,16,32',
             'keterangan'         => 'nullable|string|max:500',
             'lokasi'             => 'nullable|string|max:255',
@@ -97,15 +90,6 @@ class CustomBracketController extends Controller
         ]);
 
         return DB::transaction(function () use ($request) {
-            // Debug: Log parsed dates
-            $startDate = \Carbon\Carbon::parse($request->start_date);
-            $endDate = \Carbon\Carbon::parse($request->end_date);
-            
-            \Log::info('Tournament Store - Parsed dates:', [
-                'start_date_parsed' => $startDate->format('Y-m-d H:i:s'),
-                'end_date_parsed' => $endDate->format('Y-m-d H:i:s'),
-            ]);
-
             // Buat tournament
             $tournament = Tournament::create([
                 'name'               => $request->tournament_name,
@@ -116,14 +100,6 @@ class CustomBracketController extends Controller
                 'start_date'         => $request->start_date,
                 'end_date'           => $request->end_date,
                 'external_score_url' => $request->external_score_url,
-            ]);
-
-            // Debug: Log saved tournament
-            \Log::info('Tournament Store - Saved tournament:', [
-                'id' => $tournament->id,
-                'name' => $tournament->name,
-                'start_date_saved' => $tournament->start_date,
-                'end_date_saved' => $tournament->end_date,
             ]);
 
             // Attach teams ke tournament
@@ -196,27 +172,23 @@ class CustomBracketController extends Controller
         // Parse tanggal tournament
         $startDate = \Carbon\Carbon::parse($tournament->start_date);
         $endDate = \Carbon\Carbon::parse($tournament->end_date);
-        $totalDays = $endDate->diffInDays($startDate);
+        $totalDays = $startDate->diffInDays($endDate); // start → end = positif
         
-        // Distribusi: Round 1 di start_date (day 0), Final di end_date
-        // Hitung jarak antar round
+        // Distribusi: Round 1 = start_date, Final = end_date
+        // daysPerRound dihitung dari selisih total dibagi jumlah interval antar round
         $daysPerRound = $numRounds > 1 ? $totalDays / ($numRounds - 1) : 0;
 
-        // Buat matches dari Final ke Round 1
+        // Buat matches dari Final ke Round 1 (loop terbalik untuk resolve next_match_id)
         for ($round = $numRounds; $round >= 1; $round--) {
             $numMatches = $bracketSize / pow(2, $round);
             $roundMatches[$round] = [];
             
-            // Hitung tanggal untuk round ini
-            // Round 1 = day 0 (start_date)
-            // Round 2 = day 0 + daysPerRound
-            // Final = end_date
-            if ($round == 1) {
-                $roundDate = $startDate->copy();
-            } else {
-                $dayOffset = ($round - 1) * $daysPerRound;
-                $roundDate = $startDate->copy()->addDays($dayOffset);
-            }
+            // FIX: offset dihitung dari round terkecil (round 1 = day 0)
+            // round 1 → offset 0 → start_date
+            // round 2 → offset 1 * daysPerRound
+            // round N (final) → offset (N-1) * daysPerRound → end_date
+            $dayOffset = ($round - 1) * $daysPerRound;
+            $roundDate = $startDate->copy()->addDays($dayOffset);
 
             for ($matchNum = 1; $matchNum <= $numMatches; $matchNum++) {
                 $nextMatch = null;
@@ -225,23 +197,23 @@ class CustomBracketController extends Controller
                     $nextMatch = $roundMatches[$round + 1][$parentMatchIndex] ?? null;
                 }
                 
-                // Tambahkan offset jam untuk setiap match (misal match 1 jam 9, match 2 jam 13, dll)
-                $matchHour = 9 + (($matchNum - 1) % 3) * 4; // 9:00, 13:00, 17:00
+                // Offset jam: match 1 = 09:00, match 2 = 13:00, match 3 = 17:00, dst
+                $matchHour = 9 + (($matchNum - 1) % 3) * 4;
                 $matchDateTime = $roundDate->copy()->setTime($matchHour, 0);
 
                 $match = Pertandingan::create([
-                    'sport_id' => $sportId,
+                    'sport_id'      => $sportId,
                     'tournament_id' => $tournament->id,
-                    'round' => $round,
-                    'match_number' => $matchNum,
+                    'round'         => $round,
+                    'match_number'  => $matchNum,
                     'next_match_id' => $nextMatch ? $nextMatch->id : null,
-                    'status' => 'scheduled',
-                    'babak' => $this->getBabakName($round, $numRounds),
-                    'format_tanding' => $formatTanding,
+                    'status'        => 'scheduled',
+                    'babak'         => $this->getBabakName($round, $numRounds),
+                    'format_tanding'=> $formatTanding,
                     'waktu_tanding' => $matchDateTime,
-                    'match_date' => $matchDateTime,
-                    'lokasi' => $lokasi,
-                    'keterangan' => $keterangan,
+                    'match_date'    => $matchDateTime,
+                    'lokasi'        => $lokasi,
+                    'keterangan'    => $keterangan,
                 ]);
 
                 $roundMatches[$round][] = $match;
@@ -260,19 +232,21 @@ class CustomBracketController extends Controller
         }
 
         // Buat match Perebutan Juara 3 jika ada minimal 4 tim
+        // FIX: pakai end_date tournament, bukan now()
         if ($bracketSize >= 4) {
             Pertandingan::create([
-                'sport_id' => $sportId,
+                'sport_id'      => $sportId,
                 'tournament_id' => $tournament->id,
-                'round' => $numRounds - 1,
-                'match_number' => 99,
+                'round'         => $numRounds - 1,
+                'match_number'  => 99,
                 'next_match_id' => null,
-                'status' => 'scheduled',
-                'babak' => 'Perebutan Juara 3',
-                'format_tanding' => $formatTanding,
-                'waktu_tanding' => now()->addDays($numRounds),
-                'lokasi' => 'TBA',
-                'keterangan' => $keterangan,
+                'status'        => 'scheduled',
+                'babak'         => 'Perebutan Juara 3',
+                'format_tanding'=> $formatTanding,
+                'waktu_tanding' => $endDate->copy()->setTime(9, 0),
+                'match_date'    => $endDate->copy()->setTime(9, 0),
+                'lokasi'        => $lokasi,
+                'keterangan'    => $keterangan,
             ]);
         }
     }

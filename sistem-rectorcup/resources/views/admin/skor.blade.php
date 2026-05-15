@@ -175,17 +175,7 @@
                                 @endif
 
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="small font-weight-bold text-muted text-uppercase mb-2">Screenshot
-                                            Bukti</label>
-                                        <div class="custom-file modern-file-input">
-                                            <input type="file" name="screenshot" class="custom-file-input" id="ss{{ $p->id }}">
-                                            <label class="custom-file-label" for="ss{{ $p->id }}">
-                                                {{ $p->screenshot ? 'Update Screenshot' : 'Upload Gambar' }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-12 mb-3">
                                         <label class="small font-weight-bold text-muted text-uppercase mb-2">
                                             <i class="bi bi-info-circle mr-1"></i> Keterangan Bracket
                                         </label>

@@ -35,6 +35,18 @@ class Pertandingan extends Model
         'match_date' => 'datetime',
     ];
 
+    /**
+     * Cascade delete ke match_games saat pertandingan dihapus
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($pertandingan) {
+            $pertandingan->games()->delete();
+        });
+    }
+
     public function sport(): BelongsTo
     {
         return $this->belongsTo(Sport::class);
