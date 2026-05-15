@@ -368,13 +368,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (names[0] && names[0].textContent.trim() !== match.team_a) names[0].textContent = match.team_a;
                     if (names[1] && names[1].textContent.trim() !== match.team_b) names[1].textContent = match.team_b;
 
-                    // Update status badge
+                    // Update status badge — jika berubah ke live, reload untuk pindah section
                     const badge = card.querySelector('.badge-live-container');
                     if (badge) {
-                        if (match.status === 'live' && !badge.querySelector('.badge-live')) {
-                            badge.innerHTML = '<div class="badge-live"><span class="live-dot"></span> LIVE</div>';
-                            showToast('Pertandingan dimulai!', 'info');
-                        } else if (match.status === 'scheduled' && badge.querySelector('.badge-live')) {
+                        const isCurrentlyLive = !!badge.querySelector('.badge-live');
+                        const isCurrentlyScheduled = !!badge.querySelector('.badge-dark');
+
+                        if (match.status === 'live' && !isCurrentlyLive) {
+                            // Status berubah scheduled → live: reload agar card pindah ke section LIVE
+                            showToast('Pertandingan dimulai! Memperbarui...', 'info');
+                            setTimeout(() => location.reload(), 1000);
+                            return;
+                        } else if (match.status === 'scheduled' && isCurrentlyLive) {
                             badge.innerHTML = '<span class="badge badge-dark px-3 py-1 text-uppercase" style="border-radius:100px;background:rgba(255,255,255,0.05)">Terjadwal</span>';
                         }
                     }

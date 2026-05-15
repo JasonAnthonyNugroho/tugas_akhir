@@ -529,6 +529,13 @@
                     .listen('.match.status.updated', function(data) {
                         console.log('Admin Skor: Match status updated via Reverb:', data);
                         
+                        // Handle status live → reload agar grouping/section terupdate
+                        if (data.status === 'live') {
+                            showSkorNotification('Pertandingan dimulai! Memperbarui halaman...', 'info');
+                            setTimeout(() => location.reload(), 1000);
+                            return;
+                        }
+
                         // Handle status finished - remove from page
                         if (data.status === 'finished') {
                             const matchCard = document.querySelector(`[data-match-id="${data.id}"]`);
