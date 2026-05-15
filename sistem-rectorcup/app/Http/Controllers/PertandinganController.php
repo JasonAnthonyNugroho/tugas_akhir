@@ -267,19 +267,20 @@ class PertandinganController extends Controller
         }
 
         $request->validate([
-            'score_a' => 'required|integer',
-            'score_b' => 'required|integer',
-            'status' => 'required|string',
-            'keterangan' => 'nullable|string|max:255',
-            'screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'game_scores' => 'nullable|array',
-            'game_screenshots.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'score_a'              => 'required|integer',
+            'score_b'              => 'required|integer',
+            'status'               => 'required|string',
+            'keterangan'           => 'nullable|string|max:255',
+            'screenshot'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'game_scores'          => 'nullable|array',
+            'game_screenshots'     => 'nullable|array',
+            'game_screenshots.*'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $updateData = [
             'score_a' => $request->score_a,
             'score_b' => $request->score_b,
-            'status' => $request->status,
+            'status'  => $request->status,
         ];
 
         // Add keterangan if provided
@@ -287,7 +288,7 @@ class PertandinganController extends Controller
             $updateData['keterangan'] = $request->keterangan;
         }
 
-        // Handle Screenshot Utama
+        // Handle Screenshot Utama (hanya untuk pertandingan independen)
         if ($request->hasFile('screenshot')) {
             if ($pertandingan->screenshot && file_exists(public_path('storage/' . $pertandingan->screenshot))) {
                 unlink(public_path('storage/' . $pertandingan->screenshot));
@@ -296,24 +297,39 @@ class PertandinganController extends Controller
             $updateData['screenshot'] = $path;
         }
 
-        // Handle BO3 Games Data
+        // Handle BO3 Game Scores
         if ($request->has('game_scores')) {
             foreach ($request->game_scores as $gameNum => $scores) {
-                $game = $pertandingan->games()->updateOrCreate(
+                $pertandingan->games()->updateOrCreate(
                     ['game_number' => $gameNum],
                     [
-                        'score_a' => $scores['a'] ?? 0,
-                        'score_b' => $scores['b'] ?? 0,
-                        'winner_id' => ($scores['a'] ?? 0) > ($scores['b'] ?? 0) ? $pertandingan->team_a_id : (($scores['b'] ?? 0) > ($scores['a'] ?? 0) ? $pertandingan->team_b_id : null),
+                        'score_a'   => $scores['a'] ?? 0,
+                        'score_b'   => $scores['b'] ?? 0,
+                        'winner_id' => ($scores['a'] ?? 0) > ($scores['b'] ?? 0)
+                            ? $pertandingan->team_a_id
+                            : (($scores['b'] ?? 0) > ($scores['a'] ?? 0) ? $pertandingan->team_b_id : null),
                     ]
                 );
+            }
+        }
 
-                // Handle Game Screenshot
+        // Handle BO3 Game Screenshots — independen dari game_scores
+        // Loop manual game 1-3, upload jika ada file yang dikirim
+        if ($pertandingan->format_tanding === 'BO3') {
+            for ($gameNum = 1; $gameNum <= 3; $gameNum++) {
                 if ($request->hasFile("game_screenshots.$gameNum")) {
+                    $game = $pertandingan->games()->firstOrCreate(
+                        ['game_number' => $gameNum],
+                        ['score_a' => 0, 'score_b' => 0, 'winner_id' => null]
+                    );
+
                     if ($game->screenshot && file_exists(public_path('storage/' . $game->screenshot))) {
                         unlink(public_path('storage/' . $game->screenshot));
                     }
-                    $path = $request->file("game_screenshots.$gameNum")->store('screenshots/games', 'public');
+
+                    $path = $request->file("game_screenshots.$gameNum")
+                        ->store('screenshots/games', 'public');
+
                     $game->update(['screenshot' => $path]);
                 }
             }
@@ -364,31 +380,19 @@ class PertandinganController extends Controller
 
         // Refresh model to get latest data
         $pertandingan->refresh();
-        
-        // Debug: Log broadcast attempt
-        \Log::info('Broadcasting ScoreUpdated', [
-            'match_id' => $pertandingan->id,
-            'score_a' => $pertandingan->score_a,
-            'score_b' => $pertandingan->score_b,
-            'status' => $pertandingan->status,
-        ]);
-        
+
         broadcast(new ScoreUpdated($pertandingan));
-        
+
         // Jika status berubah ke finished, broadcast status update juga
         if ($request->status === 'finished') {
-            \Log::info('Broadcasting MatchStatusUpdated for finished match', [
-                'match_id' => $pertandingan->id,
-            ]);
-            
             broadcast(new \App\Events\MatchStatusUpdated($pertandingan->id, 'finished', [
-                'id' => $pertandingan->id,
+                'id'     => $pertandingan->id,
                 'status' => 'finished',
                 'team_a' => $pertandingan->teamA?->name,
                 'team_b' => $pertandingan->teamB?->name,
-                'score_a' => $pertandingan->score_a,
-                'score_b' => $pertandingan->score_b,
-                'sport' => $pertandingan->sport?->nama_sport,
+                'score_a'=> $pertandingan->score_a,
+                'score_b'=> $pertandingan->score_b,
+                'sport'  => $pertandingan->sport?->nama_sport,
             ]));
         }
 
