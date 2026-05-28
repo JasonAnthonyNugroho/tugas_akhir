@@ -261,6 +261,24 @@ class PertandinganController extends Controller
 
     public function updateScore(Request $request, Pertandingan $pertandingan)
     {
+        // Debug file uploads
+        \Illuminate\Support\Facades\Log::info('Fungsi updateScore dipanggil oleh admin', [
+            'pertandingan_id' => $pertandingan->id,
+            'format_tanding' => $pertandingan->format_tanding,
+            'semua_keys_input' => array_keys($request->all()),
+            'punya_screenshot' => $request->hasFile('screenshot') ? 'YA' : 'TIDAK',
+            'punya_game_screenshots' => $request->hasFile('game_screenshots') ? 'YA' : 'TIDAK',
+            'daftar_file' => array_map(function($f) {
+                return [
+                    'original_name' => $f->getClientOriginalName(),
+                    'mime_type' => $f->getClientMimeType(),
+                    'size_kb' => $f->getSize() / 1024,
+                    'error_code' => $f->getError(),
+                    'error_message' => $f->getErrorMessage(),
+                ];
+            }, $request->allFiles()),
+        ]);
+
         // Cegah update skor jika salah satu tim masih TBD
         if (!$pertandingan->team_a_id || !$pertandingan->team_b_id) {
             return back()->with('error', 'Tidak bisa update skor — salah satu tim masih TBD. Selesaikan pertandingan sebelumnya terlebih dahulu.');
