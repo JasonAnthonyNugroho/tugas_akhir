@@ -271,10 +271,10 @@ class PertandinganController extends Controller
             'score_b'              => 'required|integer',
             'status'               => 'required|string',
             'keterangan'           => 'nullable|string|max:255',
-            'screenshot'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'screenshot'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'game_scores'          => 'nullable|array',
             'game_screenshots'     => 'nullable|array',
-            'game_screenshots.*'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'game_screenshots.*'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         $updateData = [

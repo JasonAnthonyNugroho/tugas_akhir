@@ -8,6 +8,23 @@
         <p class="text-muted">Update hasil pertandingan secara real-time untuk penonton.</p>
     </div>
 
+    @if ($errors->any())
+        <div class="alert alert-danger border-0 shadow-sm mb-4 py-3" style="border-radius: 16px; background: rgba(239, 68, 68, 0.1); color: #f87171;">
+            <h6 class="font-weight-bold mb-2"><i class="bi bi-exclamation-triangle-fill mr-2"></i> Gagal Memperbarui Skor:</h6>
+            <ul class="mb-0 pl-4 small">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger border-0 shadow-sm mb-4 py-3" style="border-radius: 16px; background: rgba(239, 68, 68, 0.1); color: #f87171;">
+            <h6 class="font-weight-bold mb-0"><i class="bi bi-exclamation-triangle-fill mr-2"></i> {{ session('error') }}</h6>
+        </div>
+    @endif
+
     <div class="row">
         @php $liveMatches = $pertandingans->where('status', 'live'); @endphp
 
