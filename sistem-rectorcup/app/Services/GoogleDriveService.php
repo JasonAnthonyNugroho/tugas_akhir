@@ -10,6 +10,7 @@ class GoogleDriveService
     protected $clientEmail;
     protected $privateKey;
     protected $parentFolderId;
+    public $lastError = null;
 
     public function __construct()
     {
@@ -68,6 +69,7 @@ class GoogleDriveService
         $success = openssl_sign("$header.$payload", $signature, $privateKey, OPENSSL_ALGO_SHA256);
 
         if (!$success) {
+            $this->lastError = 'Gagal tanda tangani JWT (Check GOOGLE_DRIVE_PRIVATE_KEY)';
             Log::error('Google Drive authentication failed: Unable to sign JWT. Please check if GOOGLE_DRIVE_PRIVATE_KEY is a valid private key.');
             return null;
         }
@@ -85,8 +87,10 @@ class GoogleDriveService
                 return $response->json('access_token');
             }
 
+            $this->lastError = 'OAuth Token Request Failed: ' . $response->body();
             Log::error('Google Drive OAuth token request failed: ' . $response->body());
         } catch (\Exception $e) {
+            $this->lastError = 'OAuth Connection Error: ' . $e->getMessage();
             Log::error('Google Drive OAuth connection error: ' . $e->getMessage());
         }
 
@@ -134,9 +138,11 @@ class GoogleDriveService
                     return $files[0]['id'];
                 }
             } else {
+                $this->lastError = "Gagal mencari folder '{$folderName}': " . $response->body();
                 Log::error("Search folder '{$folderName}' in Google Drive failed: " . $response->body());
             }
         } catch (\Exception $e) {
+            $this->lastError = "Koneksi pencarian folder '{$folderName}' error: " . $e->getMessage();
             Log::error("Search folder '{$folderName}' Google Drive connection error: " . $e->getMessage());
         }
 
@@ -159,8 +165,10 @@ class GoogleDriveService
                 return $newFolderId;
             }
 
+            $this->lastError = "Gagal membuat folder '{$folderName}': " . $response->body();
             Log::error("Create folder '{$folderName}' in Google Drive failed: " . $response->body());
         } catch (\Exception $e) {
+            $this->lastError = "Koneksi pembuatan folder '{$folderName}' error: " . $e->getMessage();
             Log::error("Create folder '{$folderName}' Google Drive connection error: " . $e->getMessage());
         }
 
@@ -258,8 +266,10 @@ class GoogleDriveService
                 return $fileId;
             }
 
+            $this->lastError = "Gagal mengunggah berkas '{$fileName}': " . $response->body();
             Log::error('Google Drive file upload failed: ' . $response->body());
         } catch (\Exception $e) {
+            $this->lastError = "Koneksi unggah berkas '{$fileName}' error: " . $e->getMessage();
             Log::error('Google Drive upload connection error: ' . $e->getMessage());
         }
 

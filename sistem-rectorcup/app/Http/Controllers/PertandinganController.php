@@ -611,7 +611,8 @@ class PertandinganController extends Controller
                     $log .= "&nbsp;&nbsp;» File ID Google Drive: <span class='text-info font-weight-bold'>{$driveFileId}</span><br>";
                     $log .= "&nbsp;&nbsp;» URL Drive: <a href='https://drive.google.com/file/d/{$driveFileId}/view' target='_blank' class='text-success'>Buka File di Google Drive</a><br>";
                 } else {
-                    $log .= "&nbsp;&nbsp;» Unggah Google Drive: <span class='text-danger'>GAGAL! Layanan tidak mengembalikan File ID. Cek logs.</span><br>";
+                    $log .= "&nbsp;&nbsp;» Unggah Google Drive: <span class='text-danger'>GAGAL! Layanan tidak mengembalikan File ID.</span><br>";
+                    $log .= "&nbsp;&nbsp;» Detail Error: <span class='text-warning'>" . htmlspecialchars($driveService->lastError ?: 'Gagal tanpa pesan spesifik (cek izin hak akses Service Account ke folder).') . "</span><br>";
                 }
             } catch (\Exception $e) {
                 $log .= "&nbsp;&nbsp;» Unggah Google Drive: <span class='text-danger'>ERROR - " . $e->getMessage() . "</span><br>";
