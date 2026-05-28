@@ -36,12 +36,40 @@ class GoogleDriveService
     }
 
     /**
-     * Generate an OAuth2 access token using the Service Account JWT flow.
+     * Generate an OAuth2 access token using the Service Account JWT flow or OAuth2 Refresh Token.
      * 
      * @return string|null The access token or null on failure
      */
     public function getAccessToken()
     {
+        $clientId = config('services.google_drive.client_id');
+        $clientSecret = config('services.google_drive.client_secret');
+        $refreshToken = config('services.google_drive.refresh_token');
+
+        // Flow 1: OAuth2 Refresh Token (Sangat direkomendasikan untuk akun Gmail gratis agar tidak kena limit kuota 0 byte)
+        if (!empty($clientId) && !empty($clientSecret) && !empty($refreshToken)) {
+            try {
+                $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'refresh_token' => $refreshToken,
+                    'grant_type' => 'refresh_token',
+                ]);
+
+                if ($response->successful()) {
+                    return $response->json('access_token');
+                }
+
+                $this->lastError = 'OAuth2 Refresh Token failed: ' . $response->body();
+                Log::error($this->lastError);
+            } catch (\Exception $e) {
+                $this->lastError = 'OAuth2 Refresh Token connection error: ' . $e->getMessage();
+                Log::error($this->lastError);
+            }
+            return null;
+        }
+
+        // Flow 2: Service Account (Fallback untuk Google Workspace dengan Shared Drive)
         if (empty($this->clientEmail) || empty($this->privateKey)) {
             Log::warning('Google Drive service account credentials are not fully configured in .env.');
             return null;
