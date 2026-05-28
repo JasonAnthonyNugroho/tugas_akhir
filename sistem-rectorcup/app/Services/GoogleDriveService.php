@@ -15,7 +15,15 @@ class GoogleDriveService
     {
         $this->clientEmail = config('services.google_drive.client_email');
         $this->privateKey = config('services.google_drive.private_key');
-        $this->parentFolderId = config('services.google_drive.parent_folder_id');
+        
+        $folderId = config('services.google_drive.parent_folder_id');
+        // Jika pengguna memasukkan URL lengkap, bersihkan secara otomatis untuk mengambil ID foldernya saja
+        if (!empty($folderId) && strpos($folderId, 'drive.google.com') !== false) {
+            if (preg_match('/folders\/([a-zA-Z0-9-_]+)/', $folderId, $matches)) {
+                $folderId = $matches[1];
+            }
+        }
+        $this->parentFolderId = $folderId;
     }
 
     /**
