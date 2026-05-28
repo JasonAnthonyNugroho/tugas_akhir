@@ -8,9 +8,6 @@
             <h2 class="font-weight-bold mb-1">Kelola Skor & Status</h2>
             <p class="text-muted mb-0">Update hasil pertandingan secara real-time untuk penonton.</p>
         </div>
-        <a href="{{ route('admin.test-upload') }}" class="btn btn-outline-info rounded-pill px-4 shadow-sm font-weight-bold" style="border: 2px solid #06b6d4 !important; color: #fff !important; background: rgba(6, 182, 212, 0.1);">
-            <i class="bi bi-shield-check mr-2"></i> Diagnostik Upload & Drive
-        </a>
     </div>
 
     @if ($errors->any())
