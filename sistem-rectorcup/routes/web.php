@@ -79,8 +79,6 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     Route::get('/admin', [PertandinganController::class, 'adminDashboard'])->name('admin.index');
     Route::get('/admin/skor', [PertandinganController::class, 'manageScore'])->name('admin.skor');
-    Route::get('/admin/test-upload', [PertandinganController::class, 'testUploadPage'])->name('admin.test-upload');
-    Route::post('/admin/test-upload', [PertandinganController::class, 'handleTestUpload'])->name('admin.test-upload.post');
     Route::post('/admin/store', [PertandinganController::class, 'store'])->name('pertandingan.store');
     Route::post('/admin/bracket/{tournament}/reroll', [PertandinganController::class, 'rerollBracket'])->name('admin.bracket.reroll');
     Route::delete('/admin/tournament/{tournament}', [PertandinganController::class, 'deleteTournament'])->name('admin.tournament.delete');
