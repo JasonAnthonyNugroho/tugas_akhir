@@ -172,6 +172,22 @@
                                         <p class="small text-muted mb-0 mt-2"><i class="bi bi-info-circle mr-1"></i> Screenshot per game
                                             akan muncul di detail pertandingan.</p>
                                     </div>
+                                @else
+                                    {{-- BO1 / Single Match Screenshot --}}
+                                    <div class="mb-4 p-3 rounded-lg"
+                                        style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                                        <h6 class="small font-weight-bold text-primary text-uppercase mb-3"><i
+                                                class="bi bi-camera-fill mr-2"></i> Bukti Hasil Pertandingan</h6>
+                                        <div class="custom-file custom-file-sm">
+                                            <input type="file" name="screenshot" class="custom-file-input"
+                                                id="screenshot{{ $p->id }}">
+                                            <label class="custom-file-label small" for="screenshot{{ $p->id }}"
+                                                style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); color: var(--text-muted); border-radius: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                {{ $p->screenshot ? 'Update Screenshot Bukti' : 'Upload Screenshot Bukti' }}
+                                            </label>
+                                        </div>
+                                        <p class="small text-muted mb-0 mt-2"><i class="bi bi-info-circle mr-1"></i> Screenshot bukti akan muncul di halaman detail pertandingan.</p>
+                                    </div>
                                 @endif
 
                                 <div class="row">
@@ -499,6 +515,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('input[name="score_a"], input[name="score_b"]').forEach(inp => {
                 inp.addEventListener('input', () => syncDownButton(inp.id));
+            });
+
+            // Update label custom-file-label saat memilih berkas
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.classList.contains('custom-file-input')) {
+                    const fileName = e.target.value.split('\\').pop();
+                    const label = e.target.nextElementSibling;
+                    if (label && label.classList.contains('custom-file-label')) {
+                        label.textContent = fileName || 'Pilih file';
+                    }
+                }
             });
         });
 

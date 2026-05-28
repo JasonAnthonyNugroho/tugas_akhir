@@ -288,13 +288,41 @@ class PertandinganController extends Controller
             $updateData['keterangan'] = $request->keterangan;
         }
 
-        // Handle Screenshot Utama (hanya untuk pertandingan independen)
+        // Persiapkan detail folder bertingkat: [Tahun] / [Nama Sport] / [Tanggal]
+        $sportName = $pertandingan->sport->nama_sport ?? 'Sport';
+        $year = $pertandingan->waktu_tanding ? $pertandingan->waktu_tanding->format('Y') : now()->format('Y');
+        $date = $pertandingan->waktu_tanding ? $pertandingan->waktu_tanding->format('d-m-Y') : now()->format('d-m-Y');
+
+        $cleanSportName = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '', $sportName);
+        $cleanYear = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '', $year);
+        $cleanDate = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '', $date);
+
+        $localFolder = "{$cleanYear}/{$cleanSportName}/{$cleanDate}";
+        $driveFolderPath = [$cleanYear, $cleanSportName, $cleanDate];
+
+        // Handle Screenshot Utama (untuk pertandingan independen / BO1)
         if ($request->hasFile('screenshot')) {
             if ($pertandingan->screenshot && file_exists(public_path('storage/' . $pertandingan->screenshot))) {
-                unlink(public_path('storage/' . $pertandingan->screenshot));
+                @unlink(public_path('storage/' . $pertandingan->screenshot));
             }
-            $path = $request->file('screenshot')->store('screenshots', 'public');
+            
+            $file = $request->file('screenshot');
+            $timestamp = time();
+            $extension = $file->getClientOriginalExtension();
+            $fileName = "{$cleanSportName} - {$cleanDate}_{$timestamp}.{$extension}";
+            
+            // Simpan lokal di storage/app/public/[Tahun]/[Nama Sport]/[Tanggal]/
+            $path = $file->storeAs($localFolder, $fileName, 'public');
             $updateData['screenshot'] = $path;
+
+            // Upload ke Google Drive ke dalam folder bertingkat: [Tahun] / [Nama Sport] / [Tanggal]
+            try {
+                $driveService = app(\App\Services\GoogleDriveService::class);
+                $absolutePath = public_path('storage/' . $path);
+                $driveService->uploadFileToNestedFolders($absolutePath, $fileName, $driveFolderPath);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Gagal mengunggah screenshot utama ke Google Drive: ' . $e->getMessage());
+            }
         }
 
         // Handle BO3 Game Scores
@@ -324,13 +352,26 @@ class PertandinganController extends Controller
                     );
 
                     if ($game->screenshot && file_exists(public_path('storage/' . $game->screenshot))) {
-                        unlink(public_path('storage/' . $game->screenshot));
+                        @unlink(public_path('storage/' . $game->screenshot));
                     }
 
-                    $path = $request->file("game_screenshots.$gameNum")
-                        ->store('screenshots/games', 'public');
+                    $file = $request->file("game_screenshots.$gameNum");
+                    $timestamp = time();
+                    $extension = $file->getClientOriginalExtension();
+                    $fileName = "{$cleanSportName} - {$cleanDate}_game_{$gameNum}_{$timestamp}.{$extension}";
 
+                    // Simpan lokal di storage/app/public/[Tahun]/[Nama Sport]/[Tanggal]/
+                    $path = $file->storeAs($localFolder, $fileName, 'public');
                     $game->update(['screenshot' => $path]);
+
+                    // Upload ke Google Drive ke dalam folder bertingkat secara otomatis
+                    try {
+                        $driveService = app(\App\Services\GoogleDriveService::class);
+                        $absolutePath = public_path('storage/' . $path);
+                        $driveService->uploadFileToNestedFolders($absolutePath, $fileName, $driveFolderPath);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Gagal mengunggah screenshot game {$gameNum} ke Google Drive: " . $e->getMessage());
+                    }
                 }
             }
         }

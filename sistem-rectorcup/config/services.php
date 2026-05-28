@@ -31,4 +31,10 @@ return [
         ],
     ],
 
+    'google_drive' => [
+        'client_email' => env('GOOGLE_DRIVE_CLIENT_EMAIL'),
+        'private_key' => env('GOOGLE_DRIVE_PRIVATE_KEY'),
+        'parent_folder_id' => env('GOOGLE_DRIVE_PARENT_FOLDER_ID'),
+    ],
+
 ];
